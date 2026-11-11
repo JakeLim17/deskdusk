@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DeskDusk</title>
+<style>
+:root{--acc:#ffe0a8;--s1:#2a1b4d;--s2:#7b3f7a;--s3:#e2725b;--s4:#ffb86b;--far:#3a2a55;--near:#1a1228;--lit:1;--star:.25;--dark:.6;--orb:#ffd9a0;--w1:#5a3560;--w2:#1c1430;--sill:#3a2418;--ga:#333;--gb:#222;--gc:#111;--gd:#000}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:#0c0a12}
+body{display:flex;align-items:center;justify-content:center;font-family:-apple-system,"Apple SD Gothic Neo","Pretendard","Segoe UI","Malgun Gothic",sans-serif;color:#fff;overflow:hidden}
+.stage{position:relative;width:100vw;height:100vh;container-type:size;overflow:hidden}
+.scene{position:absolute;inset:0;width:100%;height:100%}
+.ground{display:none}.ground.on{display:inline}
+.ui{position:absolute;inset:0;font-size:min(1.02cqw,1.632cqh)}
+.glass{position:absolute;background:rgba(20,18,38,.46);-webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);border:1px solid rgba(255,255,255,.18);border-radius:1.2em;padding:1.1em 1.3em;white-space:nowrap}
+.wrapok{white-space:normal;word-break:keep-all;overflow-wrap:anywhere}
+.cut,.h>span,.row>span,.prov .mut{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.row>b,.row>span:last-child{flex:none}
+.pill,.seg{display:inline-flex;align-items:center;gap:.5em;background:rgba(20,18,38,.46);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.18);border-radius:99px;white-space:nowrap}
+.pill{padding:.45em 1em;font-size:.95em}
+button.pill{color:#fff;font-family:inherit;cursor:pointer}
+button.pill:focus-visible,.seg button:focus-visible{outline:2px solid #fff}
+button.pill[aria-expanded="true"]{background:rgba(255,255,255,.26)}
+.seg{padding:.2em;gap:0}
+.seg button{all:unset;cursor:pointer;padding:.3em .8em;border-radius:99px;font-size:.9em;color:rgba(255,255,255,.75)}
+.seg button.on{background:rgba(255,255,255,.24);color:#fff}
+.top{position:absolute;left:1.4em;right:1.4em;top:1.2em;display:flex;justify-content:space-between;align-items:center}
+.top>div{display:flex;gap:.6em;align-items:center}
+.dot{width:.55em;height:.55em;border-radius:50%;background:#6fe3a5;box-shadow:0 0 .6em #6fe3a5}
+.mut{color:rgba(255,255,255,.72)}.sm{font-size:.86em}
+.clock{font-size:4.2em;font-weight:300;letter-spacing:-.02em;line-height:1.05;font-variant-numeric:tabular-nums}
+.h{font-size:.9em;color:rgba(255,255,255,.75);display:flex;justify-content:space-between;align-items:center;gap:.8em;margin-bottom:.5em}
+.num{font-size:2.5em;font-weight:600;letter-spacing:-.02em;line-height:1.15}
+.bar{height:.5em;border-radius:99px;background:rgba(255,255,255,.16);overflow:hidden;display:flex;margin:.45em 0 .35em}
+.bar i{display:block;height:100%}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:.8em}
+.prov{padding:.75em 0;border-top:1px solid rgba(255,255,255,.12);transition:opacity .3s}
+.prov:first-of-type{border-top:0;padding-top:.2em}
+.name{font-weight:600;font-size:1.05em;display:flex;align-items:center;gap:.5em}
+.tag{font-size:.75em;font-weight:500;padding:.1em .6em;border-radius:99px;background:rgba(255,255,255,.16);flex:none}
+.sw{width:.6em;height:.6em;border-radius:50%;display:inline-block;flex:none}
+.dim{opacity:.25}
+.legend{display:grid;grid-template-columns:repeat(3,1fr);gap:.6em;margin-top:.5em}
+.legend b{display:block;font-size:1.15em;font-weight:600;color:#fff}
+.proj{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.2em .8em;align-items:center;margin-top:.45em}
+.proj span:first-child{overflow:hidden;text-overflow:ellipsis}
+.proj .bar{grid-column:1/3;margin:0}
+.proj b{text-align:right;font-weight:600}
+.panel{display:none;right:1.4em;top:4.2em;width:25em;z-index:5;background:rgba(20,18,38,.82)}
+.panel.on{display:block}
+.panel>.h{padding-right:3.4em}
+.panel .x{position:absolute;right:.8em;top:.7em;padding:.2em .7em;font-size:.82em}
+.panel label{display:flex;justify-content:space-between;font-size:.86em;margin-top:.7em}
+.panel input[type=range]{display:block;width:100%;accent-color:#ffd08a}
+.src{display:grid;grid-template-columns:auto minmax(0,1fr);gap:.35em 1em;font-size:.86em;margin-top:.5em}
+.src span:nth-child(odd){color:rgba(255,255,255,.72)}
+.src span:nth-child(even){text-align:right;white-space:normal;word-break:keep-all;overflow-wrap:anywhere}
+@keyframes snow{from{transform:translate(0,-40px)}to{transform:translate(70px,1060px)}}
+@keyframes dust{from{transform:translateX(-300px)}to{transform:translateX(1900px)}}
+@keyframes flash{0%,90%,100%{opacity:0}91%{opacity:.75}92%{opacity:.1}93.5%{opacity:.55}96%{opacity:0}}
+.flake{animation:snow linear infinite}
+.streak{animation:dust linear infinite}
+.zap{animation:flash 7s linear infinite}
+.card.off{display:none}
+#wm{position:absolute;right:1.3em;bottom:.5em;font-size:.82em;letter-spacing:.08em;font-weight:600;color:#fff;opacity:.6;pointer-events:none;z-index:3;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+#mini{display:none}
+/* 바탕화면 위젯: 풍경을 창에 꽉 채우고 핵심 숫자만 얹는다. */
+.widget body{background:#0b0a1c}
+.widget .stage{width:100vw;height:100vh;aspect-ratio:auto}
+.widget .card,.widget .top,.widget .panel{display:none!important}
+.widget #mini{display:flex;flex-direction:column;justify-content:space-between;position:absolute;inset:0;font-size:clamp(10px,min(3.6vw,6vh),34px);cursor:grab;-webkit-user-select:none;user-select:none;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+.widget #wm{font-size:clamp(8px,2.3vw,20px);right:1.1em;bottom:.7em}
+#m-tip{position:absolute;left:50%;top:23%;transform:translate(-50%,-50%);padding:.45em 1em;border-radius:99px;background:rgba(20,18,38,.72);font-size:.8em;white-space:nowrap;text-shadow:none;pointer-events:none;z-index:2}
+.shape-strip #m-tip{top:50%;font-size:.7em}
+/* 자리가 모자라 감춘 항목 */
+.nofit{display:none!important}
+.m-top{display:flex;justify-content:space-between;align-items:flex-start;padding:.8em 1em;font-size:.9em;font-weight:600}
+.m-top button{all:unset;cursor:pointer;padding:.1em .5em;border-radius:.5em;background:rgba(20,18,38,.5);opacity:0;transition:opacity .15s;font-size:1.1em}
+#mini:hover .m-top button{opacity:1}
+.m-bot{padding:2.2em 1em 1.7em;background:linear-gradient(transparent,rgba(10,8,24,.78))}
+#m-pct{font-size:2.3em;font-weight:700;line-height:1}
+#m-label{margin-left:.5em;font-size:.9em;opacity:.9}
+#m-bars{display:grid;gap:.3em;margin-top:.55em;font-size:.72em;width:max(62%,calc(var(--lw,7.5em) + 14em));max-width:100%}
+#m-bars>div{display:grid;grid-template-columns:var(--lw,7.5em) 1fr 2.6em;gap:.5em;align-items:center}
+#m-bars>div>span{white-space:nowrap}
+#m-bars .bar{margin:0;height:.42em}
+#m-bars b{text-align:right}
+#m-sub{margin-top:.5em;font-size:.72em;opacity:.85}
+/* 오른쪽 아래 ChronoCode 표시와 겹치지 않게 자리를 비운다. */
+#m-sub,#m-pace{padding-right:8.5em}
+#m-sub:empty,#m-pace:empty,#m-week:empty,#m-bars:empty,#m-clock:empty,#m-scene:empty{display:none}
+#m-clock{margin-right:.6em;font-size:1.15em}
+#m-pace{margin-top:.45em;font-size:.72em;white-space:normal;word-break:keep-all}
+#m-week{display:grid;grid-template-columns:repeat(7,.55em);gap:.3em;height:1.5em;margin-top:.55em;align-items:end}
+#m-week i{display:block;border-radius:.2em;background:rgba(255,255,255,.45);min-height:2px}
+#m-week i:last-child{background:var(--acc)}
+/* 풍경만: 숫자를 모두 감춘다. */
+.shape-frame .m-bot{display:none}
+/* 숫자 띠: 풍경 없이 낮고 넓게. 글자 크기는 창 높이를 따른다. */
+.shape-strip .scene{display:none}
+.shape-strip .stage{background:linear-gradient(120deg,#1a1736,#2c2152 60%,#3a2456)}
+.widget.shape-strip #mini{flex-direction:row;align-items:center;font-size:clamp(11px,min(20vh,3.6vw),30px);text-shadow:none}
+.shape-strip .m-top{position:absolute;right:0;top:0;padding:.3em .5em}
+.shape-strip .m-top>span{display:none}
+.shape-strip .m-bot{flex:1;display:flex;align-items:center;gap:1.1em;padding:0 1.2em;background:none;min-width:0}
+.shape-strip .m-head{display:flex;flex-direction:column;flex:none}
+.shape-strip #m-label{margin:.25em 0 0;font-size:.68em;white-space:nowrap}
+.shape-strip .m-body{flex:1;min-width:0}
+.shape-strip #m-bars{width:100%;margin-top:0}
+.shape-strip #m-week{margin-top:.2em;height:1.1em}
+.shape-strip #m-bars{font-size:.68em}
+.shape-strip #m-sub,.shape-strip #m-pace{font-size:.68em;margin-top:.3em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.widget.shape-strip #wm{font-size:clamp(8px,min(10vh,1.8vw),16px);right:.9em;bottom:.4em}
+.cn{margin-top:.8em;display:grid;gap:.55em}
+.cn>div{display:grid;grid-template-columns:1.2em 1fr;gap:.5em;align-items:start;font-size:.9em}
+.cn .dot{width:.7em;height:.7em;border-radius:50%;margin-top:.3em;background:#9aa0b4}
+.cn .ok .dot{background:#6fe3b8}.cn .warn .dot{background:#ffbe6e}
+.cn b{display:block}.cn span.d{color:rgba(255,255,255,.7);font-size:.92em;white-space:normal;word-break:keep-all}
+.wk{display:grid;grid-template-columns:repeat(7,1fr);gap:.55em;height:6.4em;margin-top:.2em}
+.wkc{display:flex;flex-direction:column;align-items:center;gap:.25em;min-width:0}
+.wkb{flex:1;width:100%;display:flex;flex-direction:column;justify-content:flex-end;border-radius:.4em;overflow:hidden;background:rgba(255,255,255,.08)}
+.wkb i{display:block;width:100%}
+.wkc span{font-size:.74em;color:rgba(255,255,255,.65)}
+.wkc.now span{color:#fff;font-weight:600}
+#settings{max-height:calc(100% - 5.4em);overflow-y:auto}
+.card{cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none}
+.card.drag{cursor:grabbing;z-index:4;border-color:rgba(255,255,255,.55)}
+.grip{position:absolute;right:.15em;bottom:.15em;width:1.3em;height:1.3em;cursor:nwse-resize;opacity:0;transition:opacity .15s;background:linear-gradient(135deg,transparent 50%,rgba(255,255,255,.7) 50%,rgba(255,255,255,.7) 58%,transparent 58%,transparent 70%,rgba(255,255,255,.7) 70%,rgba(255,255,255,.7) 78%,transparent 78%);border-radius:0 0 1em 0}
+.card:hover .grip,.card.drag .grip{opacity:1}
+.ui.locked .card{cursor:default}
+.ui.locked .grip{display:none}
+.set{font-size:.86em;color:rgba(255,255,255,.75);margin:.9em 0 .35em}
+.set:first-of-type{margin-top:.2em}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:.35em .8em;font-size:.9em}
+.checks label{display:flex;align-items:center;gap:.5em;margin:0;justify-content:flex-start;font-size:1em;cursor:pointer}
+.checks input{width:auto;accent-color:#ffd08a}
+#bgday,#bgnight,#bgdusk,#bgovercast{display:none}
+
+.imgmode #bgday,.imgmode #bgnight,.imgmode #bgdusk,.imgmode #bgovercast,.imgmode #tintnight,.imgmode #tintdusk{display:inline}
+.imgmode .ground,.imgmode #sun,.imgmode #moon,.imgmode #stars,.imgmode #clouds{display:none}
+#tintnight,#tintdusk{display:none}
+@keyframes rain{from{transform:translate(0,-200px)}to{transform:translate(-90px,1100px)}}
+@keyframes drift{from{transform:translateX(-80px)}to{transform:translateX(80px)}}
+@keyframes twinkle{50%{opacity:.25}}
+@keyframes fall{from{transform:translate(0,-80px) rotate(0)}to{transform:translate(-260px,1100px) rotate(540deg)}}
+@keyframes shoot{0%,82%{opacity:0;transform:translate(0,0)}85%{opacity:1}100%{opacity:0;transform:translate(-420px,260px)}}
+.drop{animation:rain linear infinite}
+#clouds,#cumulus{animation:drift 70s ease-in-out infinite alternate}
+.tw{animation:twinkle 3s ease-in-out infinite}
+.petal{animation:fall linear infinite;transform-box:fill-box}
+.shoot{animation:shoot 7s linear infinite}
+@media (prefers-reduced-motion:reduce){.drop,#clouds,#cumulus,.tw,.petal,.shoot,.flake,.streak,.zap{animation:none}}
+</style>
+</head>
+<body>
+<div class="stage">
+<svg class="scene" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" style="stop-color:var(--s1)"/><stop offset=".45" style="stop-color:var(--s2)"/>
+      <stop offset=".75" style="stop-color:var(--s3)"/><stop offset="1" style="stop-color:var(--s4)"/>
+    </linearGradient>
+    <radialGradient id="glow"><stop offset="0" style="stop-color:var(--orb)"/><stop offset=".16" style="stop-color:var(--orb)" stop-opacity=".9"/><stop offset=".2" style="stop-color:var(--orb)" stop-opacity=".4"/><stop offset="1" style="stop-color:var(--orb)" stop-opacity="0"/></radialGradient>
+    <radialGradient id="moong"><stop offset="0" stop-color="#f4f6ff"/><stop offset=".3" stop-color="#f4f6ff"/><stop offset=".33" stop-color="#dfe8ff" stop-opacity=".4"/><stop offset="1" stop-color="#dfe8ff" stop-opacity="0"/></radialGradient>
+    <linearGradient id="water" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--w1)"/><stop offset="1" style="stop-color:var(--w2)"/></linearGradient>
+    <linearGradient id="sillg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--sill)"/><stop offset="1" stop-color="#120b08"/></linearGradient>
+    <radialGradient id="lamp"><stop offset="0" stop-color="#ffcf8a" stop-opacity=".55"/><stop offset="1" stop-color="#ffcf8a" stop-opacity="0"/></radialGradient>
+    <linearGradient id="t1" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#bff4ff"/><stop offset="1" stop-color="#6fd0ff" stop-opacity="0"/></linearGradient>
+    <linearGradient id="t2" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#ffd0ee"/><stop offset="1" stop-color="#ff8fd0" stop-opacity="0"/></linearGradient>
+    <radialGradient id="ch"><stop offset="0" stop-color="#fff"/><stop offset=".3" stop-color="#cdf6ff" stop-opacity=".8"/><stop offset="1" stop-color="#8fe0ff" stop-opacity="0"/></radialGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="16"/></filter>
+    <filter id="b12"><feGaussianBlur stdDeviation="12"/></filter><filter id="b22"><feGaussianBlur stdDeviation="22"/></filter><filter id="b30"><feGaussianBlur stdDeviation="30"/></filter>
+  </defs>
+
+  <rect width="1600" height="1000" fill="url(#sky)"/>
+  <g id="stars" style="opacity:var(--star)"></g>
+  <circle id="moon" cx="1180" cy="210" r="150" fill="url(#moong)" opacity="0"/>
+  <circle id="sun" cx="1080" cy="560" r="300" fill="url(#glow)"/>
+  <g id="clouds"><g id="cloudset" filter="url(#soft)" opacity=".5">
+    <ellipse cx="380" cy="230" rx="280" ry="36" style="fill:var(--s3)"/>
+    <ellipse cx="1180" cy="170" rx="340" ry="32" style="fill:var(--s3)"/>
+    <ellipse cx="820" cy="330" rx="400" ry="28" style="fill:var(--s4)"/>
+  </g></g>
+  <rect id="overcast" width="1600" height="1000" fill="#39405c" opacity="0"/>
+
+  <g class="ground" data-th="city">
+    <g id="far"></g><g id="near"></g>
+    <rect y="690" width="1600" height="150" fill="url(#water)"/>
+    <g id="refl" style="opacity:calc(var(--lit)*.55)"></g>
+    <rect y="830" width="1600" height="170" fill="url(#sillg)"/>
+    <rect y="826" width="1600" height="8" fill="#000" opacity=".35"/>
+    <rect x="0" y="0" width="26" height="840" fill="#0e0a12"/><rect x="1574" y="0" width="26" height="840" fill="#0e0a12"/>
+    <rect x="797" y="0" width="7" height="840" fill="#0e0a12" opacity=".55"/>
+    <circle cx="150" cy="820" r="330" fill="url(#lamp)" style="opacity:calc(.25 + .75*var(--dark))"/>
+    <g transform="translate(1180,800)">
+      <rect x="0" y="0" width="74" height="70" rx="10" fill="#e9e2d6"/><path d="M74 16h14a16 16 0 0 1 0 34H74" fill="none" stroke="#e9e2d6" stroke-width="8"/>
+      <rect x="0" y="22" width="74" height="10" fill="#4f6fa8"/>
+      <path d="M22-10c-10-16 10-22 0-40M46-10c-10-16 10-22 0-40" stroke="#fff" stroke-width="3" fill="none" opacity=".35" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <g class="ground" data-th="sea">
+    <g id="cumulus" style="opacity:calc(1 - .8*var(--dark))"></g>
+    <rect y="660" width="1600" height="150" fill="url(#water)"/>
+    <path d="M0 660h1600" stroke="#eaf7ff" stroke-width="3" style="opacity:calc(.8 - .7*var(--dark))"/>
+    <path d="M930 660q60-46 150-40t150 40z" style="fill:var(--ga)"/>
+    <g id="spark" style="opacity:calc(1 - .8*var(--dark))"></g>
+    <path d="M0 800q260-90 520-50t520 10 560-40v280H0z" style="fill:var(--gb)"/>
+    <path d="M0 850q300-70 640-30t960-20v200H0z" style="fill:var(--gc)"/>
+    <path d="M0 910q400-50 800-20t800-10v120H0z" style="fill:var(--gd)"/>
+    <g fill="#141a2c" stroke="#141a2c">
+      <rect x="1243" y="300" width="14" height="640"/><rect x="1180" y="340" width="140" height="9"/><rect x="1196" y="388" width="108" height="8"/><rect x="1262" y="420" width="26" height="46" rx="4"/>
+      <rect x="456" y="560" width="8" height="270"/><rect x="424" y="582" width="72" height="5"/>
+      <g fill="none" stroke-width="2.5"><path d="M1184 342Q820 520 428 584"/><path d="M1250 342Q860 530 460 584"/><path d="M1316 342Q900 540 492 584"/><path d="M1184 342Q1420 430 1620 330"/><path d="M1316 342Q1480 420 1620 360"/><path d="M428 584Q200 660 -20 610"/><path d="M492 584Q240 670 -20 630"/></g>
+    </g>
+    <circle cx="1275" cy="436" r="5" fill="#ffd58a" style="opacity:var(--lit)"/>
+  </g>
+
+  <g class="ground" data-th="sakura">
+    <path d="M430 760L740 470q60-34 120 0L1170 760z" style="fill:var(--ga)"/>
+    <path d="M740 470q60-34 120 0l66 64-40-18-34 30-42-34-40 30-36-26-42 22z" fill="#fff4f8" style="opacity:calc(1 - .45*var(--dark))"/>
+    <path d="M0 760q200-120 420-60t380 20 400-40 400 60v260H0z" style="fill:var(--gb)"/>
+    <g id="sa-town" style="opacity:var(--lit)"></g>
+    <path d="M0 830h1600v170H0z" style="fill:var(--gc)"/>
+    <g stroke="#0e0a18" stroke-width="7" fill="none"><path d="M0 800h1600M0 850h1600"/><g id="sa-rail"></g></g>
+    <g style="filter:brightness(calc(1 - .5*var(--dark)))">
+      <g fill="none" stroke="#3a2230" stroke-linecap="round">
+        <path d="M-30 90C220 120 420 210 700 190" stroke-width="20"/><path d="M300 150C420 250 470 330 620 360" stroke-width="11"/><path d="M520 195C640 140 760 120 900 150" stroke-width="9"/><path d="M120 110C180 220 200 300 330 380" stroke-width="10"/>
+        <path d="M1630 60C1500 90 1420 150 1330 140" stroke-width="14"/><path d="M1480 100C1450 180 1400 230 1320 260" stroke-width="8"/>
+      </g>
+      <g id="sa-bloom"></g><g id="sa-petals"></g>
+    </g>
+  </g>
+
+  <g class="ground" data-th="lake">
+    <g style="opacity:var(--star)">
+      <g filter="url(#b30)" opacity=".45"><ellipse cx="620" cy="300" rx="620" ry="70" fill="#8fa8ff" transform="rotate(-24 620 300)"/><ellipse cx="640" cy="290" rx="380" ry="30" fill="#ffc8f0" transform="rotate(-24 640 290)"/></g>
+      <path d="M900 420Q1180 250 1640 40L1640 110Q1220 300 900 420z" fill="url(#t1)" opacity=".9"/>
+      <path d="M900 420Q1150 330 1640 190L1640 240Q1180 370 900 420z" fill="url(#t2)" opacity=".8"/>
+      <circle cx="900" cy="420" r="70" fill="url(#ch)"/>
+      <g stroke="#fff" stroke-width="3" stroke-linecap="round"><path class="shoot" d="M520 120l70-44"/><path class="shoot" style="animation-delay:-3.4s" d="M1380 300l60-38"/></g>
+    </g>
+    <path d="M0 700L180 560l120 80 160-150 190 170 150-70 200 110z" style="fill:var(--ga)"/>
+    <path d="M700 700l220-130 140 70 180-120 360 180z" style="fill:var(--gb)"/>
+    <rect y="698" width="1600" height="302" fill="url(#water)"/>
+    <g id="lk-town" style="opacity:var(--lit)"></g>
+    <path d="M0 880q300-90 620-40t420 30 560-60v190H0z" style="fill:var(--gc)"/>
+    <g style="fill:var(--gc)"><rect x="282" y="770" width="12" height="100"/><circle cx="288" cy="740" r="58"/><circle cx="246" cy="772" r="38"/><circle cx="332" cy="770" r="42"/></g>
+  </g>
+
+  <g class="ground" data-th="neon">
+    <g id="ne-far"></g><g id="ne-bld"></g>
+    <path d="M0 760h1600v240H0z" style="fill:var(--gc)"/>
+    <path d="M620 760L420 1000h760L980 760z" style="fill:var(--gd)"/>
+    <g id="ne-refl" filter="url(#b22)" style="opacity:var(--lit)"></g>
+    <g id="ne-signs" style="opacity:calc(.3 + .7*var(--lit))"></g>
+    <g transform="translate(830,640)">
+      <path d="M-92 20a92 80 0 0 1 184 0z" fill="#fff" opacity=".22" stroke="#fff" stroke-opacity=".6" stroke-width="2"/>
+      <path d="M0-60v170" stroke="#d8d8e8" stroke-width="3"/>
+      <circle cx="-14" cy="44" r="17" fill="#0b0818"/><path d="M-36 66h44l8 120h-60z" fill="#0b0818"/><path d="M-30 186h14l-2 44h-12zM-8 186h14v44h-12z" fill="#0b0818"/>
+    </g>
+  </g>
+
+  <image id="bgday" width="1600" height="1000" preserveAspectRatio="xMidYMid slice"/>
+  <image id="bgovercast" width="1600" height="1000" preserveAspectRatio="xMidYMid slice" opacity="0"/>
+  <image id="bgdusk" width="1600" height="1000" preserveAspectRatio="xMidYMid slice" opacity="0"/>
+  <image id="bgnight" width="1600" height="1000" preserveAspectRatio="xMidYMid slice" opacity="0"/>
+  <rect id="tintnight" width="1600" height="1000" fill="#0a1030" style="mix-blend-mode:multiply"/>
+  <rect id="tintdusk" width="1600" height="1000" fill="#ff8a50" style="mix-blend-mode:soft-light"/>
+  <rect id="dustveil" width="1600" height="1000" fill="#c9a055" opacity="0"/>
+  <g id="rain" stroke="#d6e8ff" stroke-width="1.6" opacity=".5"></g>
+  <g id="snow" fill="#fff"></g>
+  <g id="dust" stroke="#f3dca6" stroke-linecap="round"></g>
+  <g id="storm" style="display:none"><rect class="zap" width="1600" height="1000" fill="#fff" opacity="0"/><path class="zap" d="M1010 0l-50 190 44-6-70 210 36-4-60 170" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round" opacity="0"/></g>
+</svg>
+
+<div class="ui">
+  <div id="mini">
+    <div id="m-tip" style="display:none">끌어서 옮기기 · 오른쪽 클릭으로 꾸미기</div>
+    <div class="m-top"><span><b id="m-clock"></b><span id="m-scene"></span></span><button id="m-open" title="대시보드 열기" aria-label="대시보드 열기">⤢</button></div>
+    <div class="m-bot">
+      <div class="m-head"><b id="m-pct">–</b><span id="m-label"></span></div>
+      <div class="m-body">
+        <div id="m-bars"></div>
+        <div id="m-week"></div>
+        <div id="m-pace"></div>
+        <div id="m-sub"></div>
+      </div>
+    </div>
+  </div>
+  <div id="wm">ChronoCode</div>
+  <div class="top">
+    <div><span class="pill"><b>DeskDusk</b></span><span class="pill"><span class="dot" id="agdot"></span><span id="agents">확인 중</span></span></div>
+    <div>
+      <button class="pill" id="set-open" aria-expanded="false">설정</button>
+    </div>
+  </div>
+
+  <div class="glass panel" id="settings">
+    <div class="set" style="padding-right:3.4em">풍경</div>
+    <span class="seg" id="themes" role="group" aria-label="풍경" style="flex-wrap:wrap;border-radius:1.2em"><button data-th="city">도시</button><button data-th="sea">바다</button><button data-th="sakura">벚꽃</button><button data-th="lake">호수</button><button data-th="neon">네온</button><button data-th="palace">궁궐</button><button data-th="observatory">첨성대</button><button data-th="developer">개발자</button><button data-th="designer">디자이너</button><button data-th="writer">작가</button><button data-th="barista">카페</button></span>
+    <div class="set">빨리 태울 때의 날씨</div>
+    <span class="seg" id="weathers" role="group" aria-label="날씨"><button data-w="auto">계절 따라</button><button data-w="rain">비</button><button data-w="snow">눈</button><button data-w="dust">황사</button><button data-w="storm">뇌우</button></span>
+    <div class="set">표시할 서비스</div>
+    <span class="seg" id="filter" role="group" aria-label="표시할 서비스(여러 개 선택)"><button data-p="claude">Claude</button><button data-p="codex">Codex</button><button data-p="gemini">Gemini</button><button data-p="grok">Grok</button></span>
+    <div class="set">표시할 카드</div>
+    <div class="checks" id="cards">
+      <label><input type="checkbox" data-c="clock">시계</label><label><input type="checkbox" data-c="scene">지금 풍경</label>
+      <label><input type="checkbox" data-c="limits">사용 한도</label><label><input type="checkbox" data-c="today">오늘 태운 토큰</label>
+      <label><input type="checkbox" data-c="rhythm">토큰 리듬</label><label><input type="checkbox" data-c="projects">어디서 태웠나</label>
+      <label><input type="checkbox" data-c="pace">이 속도라면</label><label><input type="checkbox" data-c="week">최근 7일</label><label id="img-opt" style="display:none"><input type="checkbox" id="img-on">그림 배경</label>
+    </div>
+    <div class="checks" id="app-opts" style="display:none;margin-top:.8em;grid-template-columns:1fr">
+      <label><input type="checkbox" id="widget-on">바탕화면 위젯</label>
+      <div><button class="pill" id="widget-add" style="font-size:.9em;padding:.25em .8em">위젯 하나 더 띄우기</button></div>
+      <div class="mut wrapok" style="font-size:.92em">위젯을 오른쪽 클릭하면 모양과 내용을 바꿀 수 있어요.</div>
+      <label><input type="checkbox" id="autostart">로그인할 때 자동 실행</label>
+    </div>
+    <div id="alert-opts" style="display:none">
+      <div class="set">알림</div>
+      <div class="checks" style="grid-template-columns:1fr"><label><input type="checkbox" id="alerts">한도 경고 알림 (80%, 95%)</label></div>
+    </div>
+    <div class="set">언어</div>
+    <span class="seg" id="lang" role="group" aria-label="언어"><button data-l="ko">한국어</button><button data-l="en">English</button></span>
+    <div id="tray-opts" style="display:none">
+      <div class="set">메뉴바에 표시</div>
+      <span class="seg" id="tray-mode" role="group" aria-label="메뉴바에 표시"><button data-m="each">서비스마다</button><button data-m="top">가장 많이 찬 한도</button></span>
+    </div>
+    <div class="row" style="margin-top:1em;justify-content:flex-start;flex-wrap:wrap;gap:.5em .8em">
+      <button class="pill" id="pv-open" aria-expanded="false">풍경 미리보기</button>
+      <button class="pill" id="src-open" aria-expanded="false">값의 출처</button>
+      <button class="pill" id="cn-open" aria-expanded="false">연결 상태</button>
+    </div>
+    <div class="row" style="margin-top:.7em;justify-content:flex-start;align-items:center">
+      <button class="pill" id="pos-reset">카드 위치·크기 처음으로</button>
+      <label class="sm" style="display:flex;align-items:center;gap:.5em;margin:0;cursor:pointer"><input type="checkbox" id="lock" style="width:auto;accent-color:#ffd08a">카드 고정</label>
+    </div>
+    <div class="mut sm wrapok" style="margin-top:.5em">카드는 끌어서 옮기고, 오른쪽 아래 모서리를 끌어 크기를 바꿀 수 있어요.</div>
+  </div>
+
+  <div class="glass panel" id="preview">
+    <div class="h"><span>풍경 미리보기</span><span class="sm" id="pv-state"></span></div>
+    <div class="mut sm wrapok">한도가 찰수록 해가 지고, 빨리 태울수록 날씨가 거칠어져요.</div>
+    <label for="pv-l"><span>한도 사용률</span><b id="pv-lv">0%</b></label>
+    <input type="range" id="pv-l" min="0" max="100" step="1" value="0">
+    <label for="pv-r"><span>태우는 속도</span><b id="pv-rv">0</b></label>
+    <input type="range" id="pv-r" min="0" max="100" step="1" value="0">
+    <button class="pill" id="pv-real" style="margin-top:.9em">실제 값으로 돌아가기</button>
+  </div>
+
+  <div class="glass panel" id="welcome">
+    <div class="h" style="padding-right:3.6em"><span>시작하기</span><span class="sm">30초면 끝나요</span></div>
+    <div class="cn">
+      <div class="ok"><i class="dot"></i><div><b>바탕화면에 위젯을 띄웠어요</b><span class="d">다른 창 위에 작게 떠 있어요. 바탕화면에 깔아 두려면 위젯을 오른쪽 클릭해 「항상 위에 두기」를 끄거나, 메뉴바 메뉴의 「위젯을 다른 창 위에 띄우기」를 끄세요. 모양과 내용도 오른쪽 클릭으로 바꿔요.</span></div></div>
+      <div id="wl-direct-row"><i class="dot"></i><div><b>Claude 한도를 정확하게 볼까요?</b><span class="d">켜면 이 컴퓨터의 Claude Code 로그인 정보로 Anthropic 서버에 한도를 물어요. 켤 때 키체인 접근을 물어볼 수 있어요. 끄면 로컬 기록만 읽어요.</span><label class="sm" style="display:flex;align-items:center;gap:.5em;margin:.4em 0 0;cursor:pointer;justify-content:flex-start"><input type="checkbox" id="wl-direct" style="width:auto;accent-color:#ffd08a">정확한 Claude 한도 가져오기</label></div></div>
+      <div id="wl-auto-row"><i class="dot"></i><div><b>컴퓨터를 켤 때 같이 켤까요?</b><span class="d">로그인할 때 창 없이 위젯과 메뉴바 요약만 올라와요.</span><label class="sm" style="display:flex;align-items:center;gap:.5em;margin:.4em 0 0;cursor:pointer;justify-content:flex-start"><input type="checkbox" id="wl-auto" style="width:auto;accent-color:#ffd08a">로그인할 때 자동 실행</label></div></div>
+    </div>
+    <div class="row" style="margin-top:.9em;justify-content:flex-start;align-items:center;gap:.7em"><button class="pill" id="wl-done">시작하기</button></div>
+    <div class="mut sm wrapok" style="margin-top:.6em">이 창은 닫아도 돼요. 메뉴바의 DeskDusk 아이콘에서 다시 열 수 있고, 모두 「설정」에서 나중에 바꿀 수 있어요.</div>
+  </div>
+
+  <div class="glass panel" id="connect">
+    <div class="h" style="padding-right:3.6em"><span>연결 상태</span><span class="sm">로그인하지 않아요</span></div>
+    <div class="mut sm wrapok">DeskDusk는 기본 설정에서 Claude나 OpenAI에 접속하지 않아요. Claude Code와 Codex가 쓸 때마다 이 컴퓨터에 남기는 기록 파일을 읽을 뿐이에요.</div>
+    <div class="cn" id="cn-list"></div>
+    <div class="row" style="margin-top:.8em;justify-content:flex-start;align-items:center;gap:.7em"><button class="pill" id="cn-btn" style="display:none"></button><span class="sm mut wrapok" id="cn-msg"></span></div>
+    <div class="mut sm wrapok" style="margin-top:.7em" id="cn-help"></div>
+    <div id="direct-opts" style="display:none;margin-top:.9em;border-top:1px solid rgba(255,255,255,.15);padding-top:.8em">
+      <div class="checks" style="grid-template-columns:1fr"><label><input type="checkbox" id="direct-on">정확한 Claude 한도 가져오기</label></div>
+      <div class="mut sm wrapok" style="margin-top:.4em">켜면 이 컴퓨터에 저장된 Claude Code 로그인 정보로 Anthropic 서버에 한도를 10분마다 물어요. 켤 때 키체인 접근을 물어볼 수 있어요. 로그인 정보는 요청에만 쓰고 저장하지 않아요. 터미널 Claude Code에 로그인된 계정의 값이 나와요. 기본은 꺼짐이에요.</div>
+      <div class="sm wrapok" style="margin-top:.3em;color:#ffd9a8" id="direct-msg"></div>
+    </div>
+  </div>
+
+  <div class="glass panel" id="sources">
+    <div class="h"><span>값의 출처</span><span class="sm">이 컴퓨터의 기록만 읽어요</span></div>
+    <div class="src" id="src-list"></div>
+    <div class="mut sm wrapok" style="margin-top:.8em">기본 설정에서는 로그인 정보를 읽지 않고 인터넷으로 보내는 것도 없어요. 한도 값은 각 도구를 마지막으로 쓴 시점의 값이라, 그 뒤로 안 썼다면 실제와 다를 수 있어요.</div>
+    <div class="mut sm wrapok" style="margin-top:.6em">Claude 한도는 터미널에서 Claude Code를 쓸 때 새 값으로 바뀌어요.</div>
+  </div>
+
+  <div class="glass card" data-c="clock" style="left:1.4em;top:5em;width:22em">
+    <div class="clock" id="clock">--:--</div><div id="date" style="margin-top:.2em"></div>
+    <div class="mut sm cut" style="margin-top:.7em" id="headline">사용량을 읽는 중이에요</div>
+  </div>
+  <div class="glass card" data-c="scene" style="left:24.6em;top:5em;width:18em">
+    <div class="h" style="margin-bottom:.2em"><span>지금 풍경</span></div>
+    <div class="wrapok" style="font-size:1.35em;font-weight:600;line-height:1.3" id="sc-main">–</div>
+    <div class="mut sm wrapok" style="margin-top:.3em" id="sc-sub"></div>
+  </div>
+
+  <div class="glass card" data-c="week" style="left:44em;top:5em;width:24.4em">
+    <div class="h"><span>최근 7일</span><span class="sm" id="wk-sum"></span></div>
+    <div class="wk" id="wk-bars"></div>
+  </div>
+
+  <div class="glass card" data-c="limits" style="right:1.4em;top:5em;width:27em">
+    <div class="h"><span>사용 한도</span><span class="sm" id="upd"></span></div>
+    <div id="provs"></div>
+  </div>
+
+  <div class="glass card" data-c="today" style="left:1.4em;bottom:15.2em;width:25em">
+    <div class="h"><span>오늘 태운 토큰</span><span class="tag" id="rate"></span></div>
+    <div class="num" id="total">–</div>
+    <div class="bar" id="mix"></div>
+    <div class="legend sm mut">
+      <div><span class="sw" style="background:#ffd08a"></span> 새 입력<b id="t-in">–</b></div>
+      <div><span class="sw" style="background:#9fc6ff"></span> 캐시<b id="t-cache">–</b></div>
+      <div><span class="sw" style="background:#ff9bb3"></span> 출력<b id="t-out">–</b></div>
+    </div>
+    <div class="row sm mut" style="margin-top:.55em"><span title="구독료가 아니에요. 같은 양을 API로 썼다면 들었을 정가예요."><span>API로 썼다면</span> · <span>추정</span></span><b id="cost" style="color:#fff">–</b></div>
+  </div>
+  <div class="glass card" data-c="rhythm" style="left:1.4em;bottom:2.2em;width:25em">
+    <div class="h"><span>토큰 리듬</span><span class="sm">최근 1시간</span></div>
+    <svg viewBox="0 0 400 90" style="width:100%;height:6.2em;display:block" aria-hidden="true">
+      <defs><linearGradient id="ar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--acc)" stop-opacity=".7"/><stop offset="1" style="stop-color:var(--acc)" stop-opacity="0"/></linearGradient></defs>
+      <path id="area" fill="url(#ar)"/><path id="line" fill="none" style="stroke:var(--acc)" stroke-width="2" stroke-linejoin="round"/>
+    </svg>
+    <div class="row sm mut"><span>1시간 전</span><span>30분 전</span><span>지금</span></div>
+  </div>
+
+  <div class="glass card" data-c="projects" style="left:28em;right:30em;bottom:2.2em">
+    <div class="h"><span>오늘 어디서 태웠나</span><span class="sm" id="pj-cache"></span></div>
+    <div id="projs" class="sm"></div>
+  </div>
+
+  <div class="glass card" data-c="pace" style="right:1.4em;bottom:2.2em;width:27em">
+    <div class="h"><span>이 속도라면 <span class="mut">· 추정값</span></span><span class="tag" id="pace-tag"></span></div>
+    <div class="wrapok" style="font-size:1.15em;font-weight:600;line-height:1.4" id="pace-main">계산 중이에요</div>
+    <div class="mut sm wrapok" style="margin-top:.4em" id="pace-sub"></div>
+  </div>
+</div>
+</div>
+
+<script src="i18n.js"></script>
+<script>
+// 바탕화면 위젯 창에서는 같은 화면을 위젯 모양으로 그린다(브라우저에서는 주소에 ?widget 을 붙여 볼 수 있다).
+const QS=new URLSearchParams(location.search);
+const WIDGET=!!window.__TW_WIDGET||QS.has('widget');
+// 위젯마다 따로 기억하는 꾸밈: 모양(scene 풍경과 숫자, strip 숫자 띠, frame 풍경만), 보여 줄 항목, 서비스, 풍경.
+const WINFO=window.__TW_WIDGET&&typeof window.__TW_WIDGET==='object'?window.__TW_WIDGET:{};
+const WSHAPES=['scene','strip','frame'],WITEMS=['clock','scene','bars','reset','today','cost','week','pace'];
+const WOPTS={shape:'scene',items:['scene','bars','reset','today'],services:null,theme:null,top:true};
+(function(){
+  const o=WINFO.opts&&typeof WINFO.opts==='object'?WINFO.opts:{};
+  if(WSHAPES.includes(o.shape))WOPTS.shape=o.shape;
+  if(Array.isArray(o.items))WOPTS.items=WITEMS.filter(k=>o.items.includes(k));
+  if(Array.isArray(o.services)&&o.services.length)WOPTS.services=o.services.filter(k=>typeof k==='string');
+  if(typeof o.theme==='string')WOPTS.theme=o.theme;
+  WOPTS.top=o.top!==false;
+  // 브라우저에서 볼 때는 주소로 정한다(?widget&shape=strip&items=bars,today)
+  if(WSHAPES.includes(QS.get('shape')))WOPTS.shape=QS.get('shape');
+  if(QS.get('items'))WOPTS.items=WITEMS.filter(k=>QS.get('items').split(',').includes(k));
+})();
+function applyWidgetShape(){WSHAPES.forEach(k=>document.documentElement.classList.toggle('shape-'+k,WOPTS.shape===k))}
+if(WIDGET){document.documentElement.classList.add('widget');applyWidgetShape();document.querySelector('.scene').setAttribute('preserveAspectRatio','xMidYMid slice')}
+const NS='http://www.w3.org/2000/svg';
+let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+const $=id=>document.getElementById(id);
+function el(n,a,p){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e}
+
+// 공통 하늘
+for(let i=0;i<150;i++)el('circle',{class:rnd()<.3?'tw':'',cx:rnd()*1600,cy:Math.pow(rnd(),1.3)*620,r:rnd()*1.6+.4,fill:['#fff','#cfe0ff','#ffe0f0'][Math.floor(rnd()*3)],opacity:rnd()*.8+.2,style:`animation-delay:-${(rnd()*3).toFixed(1)}s`},$('stars'));
+const DROPS=[];
+for(let i=0;i<160;i++){const d=.5+rnd()*.5,x=rnd()*1750,l=40+rnd()*50;DROPS.push(el('path',{class:'drop',d:`M${x.toFixed(0)} 0l${(-l*.08).toFixed(1)} ${l.toFixed(0)}`,style:`animation-duration:${d.toFixed(2)}s;animation-delay:-${(rnd()*d).toFixed(2)}s;display:none`},$('rain')))}
+
+const FLAKES=[],STREAKS=[];
+for(let i=0;i<150;i++){const d=5+rnd()*6;FLAKES.push(el('circle',{class:'flake',cx:(rnd()*1700-80).toFixed(0),cy:0,r:(1.5+rnd()*3).toFixed(1),opacity:(.5+rnd()*.5).toFixed(2),style:`animation-duration:${d.toFixed(1)}s;animation-delay:-${(rnd()*d).toFixed(1)}s;display:none`},$('snow')))}
+for(let i=0;i<70;i++){const d=1.2+rnd()*1.6,y=rnd()*1000,l=60+rnd()*160;STREAKS.push(el('path',{class:'streak',d:`M0 ${y.toFixed(0)}q${(l/2).toFixed(0)} ${(rnd()*16-8).toFixed(0)} ${l.toFixed(0)} 0`,fill:'none','stroke-width':(1+rnd()*2).toFixed(1),opacity:(.25+rnd()*.4).toFixed(2),style:`animation-duration:${d.toFixed(2)}s;animation-delay:-${(rnd()*d).toFixed(2)}s;display:none`},$('dust')))}
+
+// 도시
+function skyline(g,base,minH,maxH,minW,maxW,fillVar,win){
+  let x=20;
+  while(x<1580){
+    const w=minW+rnd()*(maxW-minW),h=minH+rnd()*(maxH-minH);
+    el('rect',{x,y:base-h,width:w,height:h,style:`fill:var(${fillVar})`},g);
+    if(rnd()<.25)el('rect',{x:x+w/2-2,y:base-h-26,width:4,height:26,style:`fill:var(${fillVar})`},g);
+    for(let wy=base-h+10;wy<base-10;wy+=win*2.2)for(let wx=x+6;wx<x+w-win-3;wx+=win*2){
+      if(rnd()<.42){
+        el('rect',{x:wx,y:wy,width:win,height:win*1.2,fill:rnd()<.8?'#ffd58a':'#fff1cf',style:'opacity:calc(var(--lit)*'+(0.45+rnd()*.5).toFixed(2)+')'},g);
+        if(g.id==='near'&&rnd()<.12)el('rect',{x:wx,y:700+rnd()*110,width:win,height:2+rnd()*10,fill:'#ffd58a'},$('refl'));
+      }
+    }
+    x+=w+rnd()*8;
+  }
+}
+skyline($('far'),690,90,300,34,80,'--far',5);
+skyline($('near'),690,50,210,46,110,'--near',7);
+
+// 바다
+let cid=0;
+function cloud(g,cx,cy,s,rows,shade){
+  const id='cc'+(cid++),cp=el('clipPath',{id},g);el('rect',{x:cx-900*s,y:cy-900*s,width:1800*s,height:934*s},cp);
+  const grp=el('g',{'clip-path':`url(#${id})`},g),c=[];
+  for(let r=0;r<rows;r++){const n=rows-r+1,w=n*74*s;for(let i=0;i<n;i++)c.push([cx-w/2+i*w/(n-1)+(rnd()-.5)*40*s,cy-r*56*s+(rnd()-.5)*18*s,(64-r*3)*s*(.8+rnd()*.5)])}
+  c.forEach(p=>el('circle',{cx:p[0]+10*s,cy:p[1]+18*s,r:p[2],fill:shade},grp));
+  c.forEach(p=>el('circle',{cx:p[0]-4*s,cy:p[1]-6*s,r:p[2]*.94,fill:'#fff'},grp));
+}
+seed=5;const cu=$('cumulus');
+cloud(cu,430,650,1.25,6,'#a9c8f2');cloud(cu,1120,655,.95,5,'#b4d0f5');cloud(cu,820,660,.55,4,'#c2dafa');cloud(cu,1500,655,.6,4,'#b4d0f5');cloud(cu,60,655,.6,4,'#b4d0f5');
+for(let i=0;i<70;i++){const y=668+rnd()*124;el('rect',{x:rnd()*1600,y,width:10+rnd()*50*(y-650)/60,height:2,fill:'#fff',opacity:(.25+rnd()*.5).toFixed(2)},$('spark'))}
+
+// 벚꽃
+seed=9;
+for(let i=0;i<60;i++)el('rect',{x:rnd()*1600,y:770+rnd()*50,width:4,height:4,fill:'#ffe3a0',opacity:(.4+rnd()*.6).toFixed(2)},$('sa-town'));
+for(let x=30;x<1600;x+=90)el('path',{d:`M${x} 800v60`},$('sa-rail'));
+const anchors=[[80,100],[190,120],[300,150],[420,180],[540,195],[660,192],[360,230],[450,300],[560,345],[620,360],[620,160],[740,125],[860,140],[150,200],[210,290],[320,375],[1560,75],[1450,110],[1350,140],[1440,190],[1340,255]];
+const pk=['#ffc4d8','#ff9fc2','#ffe3ee','#ffb0cc','#fff4f8'];
+anchors.forEach(a=>{for(let i=0;i<16;i++)el('circle',{cx:a[0]+(rnd()-.5)*130,cy:a[1]+(rnd()-.5)*90,r:12+rnd()*24,fill:pk[Math.floor(rnd()*pk.length)],opacity:(.82+rnd()*.18).toFixed(2)},$('sa-bloom'))});
+const PETALS=[];
+for(let i=0;i<70;i++){const d=7+rnd()*9;PETALS.push(el('ellipse',{class:'petal',cx:rnd()*1900,cy:0,rx:5+rnd()*5,ry:3+rnd()*2,fill:pk[Math.floor(rnd()*3)],style:`animation-duration:${d.toFixed(1)}s;animation-delay:-${(rnd()*d).toFixed(1)}s`},$('sa-petals')))}
+
+// 호수
+seed=21;
+for(let i=0;i<50;i++){const x=980+rnd()*520;el('rect',{x,y:690+rnd()*10,width:3,height:3,fill:'#ffd9a0',opacity:(.5+rnd()*.5).toFixed(2)},$('lk-town'));el('rect',{x,y:706+rnd()*30,width:3,height:6+rnd()*14,fill:'#ffd9a0',opacity:.18},$('lk-town'))}
+
+// 네온
+seed=33;
+for(let x=560;x<1040;x+=44+rnd()*30){const h=200+rnd()*330;el('rect',{x,y:760-h,width:40+rnd()*30,height:h,style:'fill:var(--ga)'},$('ne-far'))}
+function tower(x,w,h){const g=$('ne-bld');el('rect',{x,y:760-h,width:w,height:h,style:'fill:var(--gb)'},g);
+  for(let wy=760-h+18;wy<740;wy+=26)for(let wx=x+10;wx<x+w-16;wx+=24)if(rnd()<.5)el('rect',{x:wx,y:wy,width:12,height:14,fill:rnd()<.6?'#ffd58a':'#8fe6ff',style:'opacity:calc(var(--lit)*'+(.25+rnd()*.6).toFixed(2)+')'},g)}
+tower(0,170,720);tower(160,150,560);tower(300,170,640);tower(460,130,430);tower(1010,140,450);tower(1140,170,620);tower(1300,150,540);tower(1440,170,730);
+function sign(x,y,w,color,txt){const g=$('ne-signs'),h=txt.length*52+24;
+  el('rect',{x:x-6,y:y-6,width:w+12,height:h+12,rx:8,fill:color,opacity:.55,filter:'url(#b12)'},g);
+  el('rect',{x,y,width:w,height:h,rx:6,fill:'#0c0818',stroke:color,'stroke-width':4},g);
+  [...txt].forEach((ch,i)=>{const t=el('text',{x:x+w/2,y:y+52+i*52,'text-anchor':'middle','font-size':40,'font-weight':700,fill:color,'font-family':'-apple-system,Apple SD Gothic Neo,sans-serif'},g);t.textContent=ch});
+  el('rect',{x:x-10,y:780,width:w+20,height:210,fill:color,opacity:.4},$('ne-refl'))}
+sign(370,250,64,'#ff5fb0','라멘');sign(250,430,64,'#49f0ff','서점');sign(480,470,60,'#ffe066','24시');
+sign(1090,220,64,'#49f0ff','커피');sign(1230,400,64,'#ff5fb0','노래방');sign(1040,500,60,'#b98bff','약국');
+
+// 풍경 상태: L(한도 사용률 0~1)에 따라 아침→낮→노을→밤, R(태우는 속도 0~1)에 따라 맑음→흐림→비
+const KEYS=[
+ {t:0,  s1:'#27335e',s2:'#74699b',s3:'#f0a48c',s4:'#ffdcae',far:'#4a4670',near:'#211c36',w1:'#6b6a95',w2:'#1b1a30',sill:'#33221a',lit:.5,star:.12,dark:.45},
+ {t:.3, s1:'#3587d2',s2:'#74b6ee',s3:'#b6dbf8',s4:'#e8f5ff',far:'#8fa9c8',near:'#56708f',w1:'#5fa6e6',w2:'#2a66a8',sill:'#5a3c2a',lit:.04,star:0,dark:0},
+ {t:.55,s1:'#3d7fc4',s2:'#86b4e2',s3:'#f1d3b0',s4:'#ffe6c2',far:'#7f93b4',near:'#4b5d7c',w1:'#7fa3c8',w2:'#35577c',sill:'#553828',lit:.15,star:0,dark:.12},
+ {t:.78,s1:'#2a1b4d',s2:'#7b3f7a',s3:'#e2725b',s4:'#ffb86b',far:'#3a2a55',near:'#1a1228',w1:'#5a3560',w2:'#1c1430',sill:'#3a2418',lit:1,star:.25,dark:.62},
+ {t:1,  s1:'#050817',s2:'#0d1632',s3:'#18264c',s4:'#273763',far:'#141c38',near:'#090c1a',w1:'#131c3a',w2:'#070912',sill:'#24170f',lit:1,star:1,dark:1}
+];
+// 풍경별 땅 색(낮 → 밤)과 강조색
+const THEMES={
+ city:{acc:'#ffe0a8'},
+ sea:{acc:'#ffe9a8',g:[['#2c6f8f','#0f1b30'],['#2f9a55','#0d2620'],['#1f7a45','#091c18'],['#145c36','#05120e']]},
+ sakura:{acc:'#ffc4d8',g:[['#8f72b8','#1d1838'],['#6a5196','#120f26'],['#3a2c5a','#0a0814'],['#000000','#000000']]},
+ lake:{acc:'#bff4ff',g:[['#5a72b0','#1a2260'],['#465c98','#141a4e'],['#24493a','#060a22'],['#000000','#000000']]},
+ neon:{acc:'#ff8fd0',g:[['#7c82aa','#231548'],['#565c86','#120b26'],['#454a68','#0c0818'],['#34384f','#130d28']]},
+ // 그림만 있는 풍경(벡터 풍경 없음): 그림 배경을 항상 쓴다.
+ palace:{acc:'#ffd9a0',img:true},
+ observatory:{acc:'#d6f2b0',img:true},
+ developer:{acc:'#9fd0ff',img:true},
+ designer:{acc:'#ffc9a8',img:true},
+ writer:{acc:'#ffe0a8',img:true},
+ barista:{acc:'#ffd2a0',img:true}
+};
+let theme='city',lastScene=[.6,.3],weatherPref='auto',imageMode=false;
+// 지금 풍경에 있는 시간대·날씨 그림
+const HAS={dusk:false,night:false,overcast:false};
+// 「계절 따라」: 겨울엔 눈, 봄엔 황사, 여름엔 뇌우, 가을엔 비
+function seasonWeather(){const m=new Date().getMonth()+1;return m>=11||m<=2?'snow':m<=5?'dust':m<=8?'storm':'rain'}
+const WORDS={rain:['고요','맑음','구름','가랑비','비'],snow:['고요','맑음','구름','눈발','함박눈'],dust:['고요','맑음','뿌연 하늘','황사','황사 바람'],storm:['고요','맑음','먹구름','소나기','뇌우']};
+const show=(list,n)=>list.forEach((d,j)=>d.style.display=j<n?'':'none');
+const hex=c=>[1,3,5].map(i=>parseInt(c.slice(i,i+2),16));
+const mix=(a,b,t)=>'#'+hex(a).map((v,i)=>Math.round(v+(hex(b)[i]-v)*t).toString(16).padStart(2,'0')).join('');
+const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+function applyScene(L,R){
+  L=clamp(L);R=clamp(R);lastScene=[L,R];
+  let i=0;while(i<KEYS.length-2&&L>KEYS[i+1].t)i++;
+  const a=KEYS[i],b=KEYS[i+1],t=clamp((L-a.t)/(b.t-a.t)),st=document.documentElement.style,num=k=>a[k]+(b[k]-a[k])*t;
+  for(const k of ['s1','s2','s3','s4','far','near','w1','w2','sill'])st.setProperty('--'+k,mix(a[k],b[k],t));
+  const dark=num('dark');
+  st.setProperty('--lit',num('lit').toFixed(2));
+  st.setProperty('--dark',dark.toFixed(2));
+  st.setProperty('--star',(num('star')*(1-.8*clamp((R-.3)/.7))).toFixed(2));
+  (THEMES[theme].g||[]).forEach((c,j)=>st.setProperty('--g'+'abcd'[j],mix(c[0],c[1],dark)));
+  // 해는 한도 0%에 뜨고 85%에 진다. 그 뒤는 달.
+  const p=clamp(L/.85),sun=$('sun');
+  sun.setAttribute('cx',(170+1260*p).toFixed(0));sun.setAttribute('cy',(680-480*Math.sin(Math.PI*p)).toFixed(0));
+  sun.setAttribute('opacity',clamp((.9-L)/.08).toFixed(2));
+  st.setProperty('--orb',mix('#fff7dc','#ffa25e',clamp(Math.abs(p-.5)*2.2-.4)));
+  $('moon').setAttribute('opacity',clamp((L-.84)/.12).toFixed(2));
+  // 날씨
+  const w=weatherPref==='auto'?seasonWeather():weatherPref;
+  const cloudy=clamp((R-.25)/.5),heavy=clamp((R-.6)/.4),mid=clamp((R-.45)/.55);
+  const oc=$('overcast');
+  oc.setAttribute('fill',w==='snow'?'#8e97b0':w==='storm'?'#262b40':'#39405c');
+  oc.setAttribute('opacity',((w==='dust'?.2:w==='snow'?.45:w==='storm'?.72:.6)*cloudy).toFixed(2));
+  $('cloudset').setAttribute('opacity',(.35+.45*clamp(R/.5)).toFixed(2));
+  $('clouds').style.animationDuration=(80-62*R).toFixed(0)+'s';
+  show(DROPS,w==='rain'||w==='storm'?Math.round(DROPS.length*heavy):0);
+  show(FLAKES,w==='snow'?Math.round(FLAKES.length*mid):0);
+  show(STREAKS,w==='dust'?Math.round(STREAKS.length*mid):0);
+  $('dustveil').setAttribute('opacity',w==='dust'?(.5*clamp((R-.3)/.6)).toFixed(2):'0');
+  $('storm').style.display=w==='storm'&&heavy>.45?'':'none';
+  // 그림 배경일 때의 시간대 색 입히기
+  // 그림이 있는 시간대는 그림을 겹쳐 서서히 바꾸고, 없는 시간대는 색을 입힌다.
+  // 쌓는 순서: 낮 → 흐린 날 → 노을 → 밤.
+  $('bgovercast').setAttribute('opacity',HAS.overcast?((w==='dust'?.5:1)*cloudy).toFixed(2):'0');
+  $('bgdusk').setAttribute('opacity',HAS.dusk?clamp((L-.5)/.25).toFixed(2):'0');
+  $('bgnight').setAttribute('opacity',HAS.night?(HAS.dusk?clamp((L-.8)/.15):dark).toFixed(2):'0');
+  $('tintnight').setAttribute('opacity',HAS.night?'0':(.85*dark*(HAS.dusk?clamp((L-.8)/.15):1)).toFixed(2));
+  $('tintdusk').setAttribute('opacity',HAS.dusk?'0':(.7*clamp(1-Math.abs(L-.78)/.2)).toFixed(2));
+  // 벚꽃 풍경에서는 바람이 셀수록 꽃잎이 많이 날린다.
+  const pn=Math.round(PETALS.length*(.25+.75*clamp(R/.7)));
+  PETALS.forEach((d,j)=>d.style.display=j<pn?'':'none');
+  const time=T(L<.12?'이른 아침':L<.45?'한낮':L<.68?'늦은 오후':L<.88?'해질녘':'밤');
+  const sky=T(WORDS[w][R<.08?0:R<.3?1:R<.6?2:R<.8?3:4]);
+  return {time,sky};
+}
+function setTheme(t){
+  if(!THEMES[t])t='city';
+  theme=t;
+  document.querySelectorAll('.ground').forEach(g=>g.classList.toggle('on',g.dataset.th===t));
+  document.querySelectorAll('#themes button').forEach(b=>b.classList.toggle('on',b.dataset.th===t));
+  document.documentElement.style.setProperty('--acc',THEMES[t].acc);
+  if(!WIDGET)try{localStorage.setItem('tw-theme',t)}catch(e){}
+  loadBackdrop(t);
+  applyScene(lastScene[0],lastScene[1]);
+}
+// 풍경 이름으로 된 그림 파일(assets/bg/<풍경>-day.jpg 또는 .png)이 있으면 그림 배경을 쓸 수 있다. -dusk, -night, -overcast는 있으면 쓴다.
+function probeImage(base,ok,fail){
+  const exts=['jpg','png'];let i=0;const img=new Image();
+  img.onload=()=>ok(img.src);
+  img.onerror=()=>{i++;if(i<exts.length)img.src=`${base}.${exts[i]}`;else if(fail)fail()};
+  img.src=`${base}.${exts[0]}`;
+}
+function loadBackdrop(t){
+  const stage=document.querySelector('.scene');
+  $('img-opt').style.display='none';stage.classList.remove('imgmode');imageMode=false;
+  for(const k in HAS){HAS[k]=false;$('bg'+k).removeAttribute('href')}
+  probeImage(`assets/bg/${t}-day`,src=>{
+    if(theme!==t)return;
+    $('bgday').setAttribute('href',src);$('img-opt').style.display=THEMES[t].img?'none':'';
+    for(const k in HAS)probeImage(`assets/bg/${t}-${k}`,u=>{
+      if(theme!==t)return;
+      $('bg'+k).setAttribute('href',u);HAS[k]=true;applyScene(...lastScene);
+    });
+    let want='1';try{want=localStorage.getItem('tw-img')??'1'}catch(e){}
+    if(THEMES[t].img)want='1';
+    $('img-on').checked=want==='1';setImageMode(want==='1');
+  });
+}
+function setImageMode(on){imageMode=on;document.querySelector('.scene').classList.toggle('imgmode',on)}
+$('img-on').addEventListener('change',e=>{try{localStorage.setItem('tw-img',e.target.checked?'1':'0')}catch(x){}setImageMode(e.target.checked)});
+function setWeather(w){
+  if(!WORDS[w]&&w!=='auto')w='auto';
+  weatherPref=w;
+  document.querySelectorAll('#weathers button').forEach(b=>b.classList.toggle('on',b.dataset.w===w));
+  try{localStorage.setItem('tw-weather',w)}catch(e){}
+  applyScene(lastScene[0],lastScene[1]);
+  if(window.rerenderScene)rerenderScene();
+}
+$('weathers').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setWeather(b.dataset.w)});
+// 카드 켜고 끄기
+let hidden=[];try{hidden=JSON.parse(localStorage.getItem('tw-hidden')||'[]')}catch(e){}
+function applyCards(){
+  document.querySelectorAll('.card').forEach(c=>c.classList.toggle('off',hidden.includes(c.dataset.c)));
+  document.querySelectorAll('#cards input[data-c]').forEach(i=>i.checked=!hidden.includes(i.dataset.c));
+}
+$('cards').addEventListener('change',e=>{const c=e.target.dataset.c;if(!c)return;
+  hidden=e.target.checked?hidden.filter(x=>x!==c):[...hidden,c];
+  try{localStorage.setItem('tw-hidden',JSON.stringify(hidden))}catch(x){}applyCards()});
+applyCards();
+// 카드 끌어 옮기기·크기 바꾸기: 위치(l,t)는 화면 글자 크기 단위, 폭(w)은 카드 자신의 글자 크기 단위, s는 배율.
+// 배율은 카드의 글자 크기를 바꾸는 방식이라 안의 글자와 간격이 함께 커지고 작아진다.
+let pos={};try{pos=JSON.parse(localStorage.getItem('tw-pos')||'{}')}catch(e){}
+let locked=false;try{locked=localStorage.getItem('tw-lock')==='1'}catch(e){}
+const uiBox=document.querySelector('.ui');
+const emPx=()=>parseFloat(getComputedStyle(uiBox).fontSize)||16;
+const SMIN=.6,SMAX=1.8;
+function placeCard(c){const p=pos[c.dataset.c];if(!p)return;const k=Math.max(SMIN,Math.min(SMAX,+p.s||1));
+  c.style.fontSize=k+'em';c.style.left=(p.l/k)+'em';c.style.top=(p.t/k)+'em';c.style.right='auto';c.style.bottom='auto';c.style.width=p.w+'em'}
+function savePos(){try{localStorage.setItem('tw-pos',JSON.stringify(pos))}catch(x){}}
+function setLock(on){locked=on;uiBox.classList.toggle('locked',on);$('lock').checked=on;try{localStorage.setItem('tw-lock',on?'1':'0')}catch(x){}}
+document.querySelectorAll('.card').forEach(c=>{
+  c.dataset.orig=c.getAttribute('style');placeCard(c);
+  const grip=document.createElement('div');grip.className='grip';grip.setAttribute('aria-hidden','true');c.appendChild(grip);
+  const scaleOf=()=>+(pos[c.dataset.c]&&pos[c.dataset.c].s)||1;
+  c.addEventListener('pointerdown',e=>{
+    if(locked||e.button!==0||e.target.closest('button,input,a'))return;
+    const sizing=e.target===grip,s0=scaleOf();
+    const r=c.getBoundingClientRect(),u=uiBox.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;let moved=false;
+    // 모서리를 끌 때 창 밖으로 나가지 않는 가장 큰 배율
+    const smax=Math.min(SMAX,s0*(u.right-r.left)/r.width,s0*(u.bottom-r.top)/r.height);
+    try{c.setPointerCapture(e.pointerId)}catch(x){}
+    const move=ev=>{
+      if(!moved&&Math.hypot(ev.clientX-e.clientX,ev.clientY-e.clientY)<4)return;
+      moved=true;c.classList.add('drag');const m=emPx();
+      if(sizing){
+        const k=Math.max(SMIN,Math.min(smax,s0*(ev.clientX-r.left+(r.width-dx))/r.width));
+        pos[c.dataset.c]={l:+((r.left-u.left)/m).toFixed(2),t:+((r.top-u.top)/m).toFixed(2),w:+(r.width/m/s0).toFixed(2),s:+k.toFixed(3)};
+      }else{
+        const x=Math.max(0,Math.min(u.width-r.width,ev.clientX-u.left-dx)),y=Math.max(0,Math.min(u.height-r.height,ev.clientY-u.top-dy));
+        pos[c.dataset.c]={l:+(x/m).toFixed(2),t:+(y/m).toFixed(2),w:+(r.width/m/s0).toFixed(2),s:s0};
+      }
+      placeCard(c);
+    };
+    const up=()=>{
+      c.removeEventListener('pointermove',move);c.removeEventListener('pointerup',up);c.removeEventListener('pointercancel',up);
+      c.classList.remove('drag');if(moved)savePos();
+    };
+    c.addEventListener('pointermove',move);c.addEventListener('pointerup',up);c.addEventListener('pointercancel',up);
+  });
+});
+function resetCards(){pos={};try{localStorage.removeItem('tw-pos')}catch(e){}document.querySelectorAll('.card').forEach(c=>c.setAttribute('style',c.dataset.orig))}
+$('lock').addEventListener('change',e=>setLock(e.target.checked));setLock(locked);
+$('pos-reset').addEventListener('click',resetCards);
+// 설정 패널
+function setSettings(on){
+  if(on){if(window.setPreview)setPreview(false);if(window.setSources)setSources(false);if(window.setConnect)setConnect(false);$('welcome').classList.remove('on')}
+  $('settings').classList.toggle('on',on);$('set-open').setAttribute('aria-expanded',String(on));
+}
+$('set-open').addEventListener('click',()=>setSettings(!$('settings').classList.contains('on')));
+// 모든 패널에 닫기 버튼을 달고, Esc로도 닫는다.
+function closePanels(){$('welcome').classList.remove('on');setSettings(false);if(window.setPreview)setPreview(false);if(window.setSources)setSources(false);if(window.setConnect)setConnect(false)}
+document.querySelectorAll('.panel').forEach(p=>{const b=document.createElement('button');b.className='pill x';b.type='button';b.textContent=T('닫기');b.addEventListener('click',closePanels);p.prepend(b)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePanels()});
+$('pv-open').addEventListener('click',()=>setSettings(false));
+$('src-open').addEventListener('click',()=>setSettings(false));
+$('cn-open').addEventListener('click',()=>setSettings(false));
+let savedW='auto';try{savedW=localStorage.getItem('tw-weather')||'auto'}catch(e){}
+$('themes').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setTheme(b.dataset.th)});
+let saved='city';try{saved=localStorage.getItem('tw-theme')||'city'}catch(e){}
+if(WIDGET&&WOPTS.theme)saved=WOPTS.theme;
+setTheme(saved);setWeather(savedW);
+window.applyScene=applyScene;window.setTheme=setTheme;
+</script>
+<script src="app.js"></script>
+<script>translateDom(document.body)</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+{
+  "as_of": "2026-11-11",
+  "note": "API 정가(100만 토큰당 달러)로 환산한 추정값. 구독 요금제의 실제 청구액이 아니다. 캐시 쓰기는 5분 캐시(cache_write, 입력의 1.25배)와 1시간 캐시(cache_write_1h, 적지 않으면 입력의 2배)를 나눠 계산한다. 긴 문맥 할증(Haiku 5.5의 10만 토큰 초과 요금 포함)과 일괄 처리 할인은 반영하지 않는다. 2026-11-11에 Anthropic과 OpenAI의 공식 요금 페이지와 대조했다. 모델 이름은 앞부분이 가장 길게 맞는 줄을 쓴다.",
+  "models": [
+    { "prefix": "claude-mythos-5-2", "input": 8, "cache_write": 10, "cache_read": 0.2, "output": 40 },
+    { "prefix": "claude-mythos-5-1", "input": 10, "cache_write": 12.5, "cache_read": 0.25, "output": 50 },
+    { "prefix": "claude-mythos-5", "input": 10, "cache_write": 12.5, "cache_read": 1, "output": 50 },
+    { "prefix": "claude-fable-5-2", "input": 8, "cache_write": 10, "cache_read": 0.2, "output": 40 },
+    { "prefix": "claude-fable-5-1", "input": 10, "cache_write": 12.5, "cache_read": 0.25, "output": 50 },
+    { "prefix": "claude-fable-5", "input": 10, "cache_write": 12.5, "cache_read": 1, "output": 50 },
+    { "prefix": "claude-opus-5-5", "input": 4, "cache_write": 5, "cache_read": 0.2, "output": 20 },
+    { "prefix": "claude-opus-5", "input": 5, "cache_write": 6.25, "cache_read": 0.5, "output": 25 },
+    { "prefix": "claude-opus-4-1", "input": 15, "cache_write": 18.75, "cache_read": 1.5, "output": 75 },
+    { "prefix": "claude-opus-4-0", "input": 15, "cache_write": 18.75, "cache_read": 1.5, "output": 75 },
+    { "prefix": "claude-opus-4-2025", "input": 15, "cache_write": 18.75, "cache_read": 1.5, "output": 75 },
+    { "prefix": "claude-opus-4", "input": 5, "cache_write": 6.25, "cache_read": 0.5, "output": 25 },
+    { "prefix": "claude-sonnet-5-5", "input": 2, "cache_write": 2.5, "cache_read": 0.1, "output": 10 },
+    { "prefix": "claude-sonnet-5", "input": 2, "cache_write": 2.5, "cache_read": 0.2, "output": 10 },
+    { "prefix": "claude-sonnet-4", "input": 3, "cache_write": 3.75, "cache_read": 0.3, "output": 15 },
+    { "prefix": "claude-haiku-5-5", "input": 0.1, "cache_write": 0.125, "cache_read": 0.01, "output": 0.5 },
+    { "prefix": "claude-haiku-4-5", "input": 1, "cache_write": 1.25, "cache_read": 0.1, "output": 5 },
+    { "prefix": "gpt-6.1-sol", "input": 2, "cache_write": 2, "cache_read": 0.1, "output": 10, "source": "OpenAI 공식 요금 페이지" },
+    { "prefix": "gpt-6-luna", "input": 0.1, "cache_write": 0.1, "cache_read": 0.01, "output": 0.5, "source": "OpenAI 공식 요금 페이지" },
+    { "prefix": "gpt-6-astra", "input": 10, "cache_write": 10, "cache_read": 1, "output": 50, "source": "OpenAI 공식 요금 페이지" },
+    { "prefix": "gpt-6.1-terra", "input": 1, "cache_write": 1, "cache_read": 0.05, "output": 5, "source": "OpenAI 공식 요금 페이지" },
+    { "prefix": "gpt-6-sol", "input": 2, "cache_write": 2, "cache_read": 0.2, "output": 10, "source": "OpenAI 공식 요금 페이지" },
+    { "prefix": "gpt-5.6-terra", "input": 2, "cache_write": 2, "cache_read": 0.2, "output": 12, "source": "OpenAI 공식 요금 페이지" },
+    { "prefix": "gpt-5.6-luna", "input": 0.2, "cache_write": 0.2, "cache_read": 0.02, "output": 1.2, "source": "OpenAI 공식 요금 페이지" },
+    { "prefix": "gpt-5.6-sol", "input": 4, "cache_write": 4, "cache_read": 0.4, "output": 20, "source": "OpenAI 공식 요금 페이지" },
+    { "prefix": "gpt-5.3-codex", "input": 1.75, "cache_write": 1.75, "cache_read": 0.175, "output": 14, "source": "OpenAI 공식 요금 페이지" }
+  ]
+}
