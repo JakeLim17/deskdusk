@@ -106,7 +106,7 @@
     '오늘 토큰과 속도': 'Tokens today and rate', 'API 환산 비용': 'API-equivalent cost', '서비스': 'Services', '대시보드 따라가기': 'Follow dashboard',
     '위젯 하나 더 띄우기': 'Add another widget', '화면 가운데로 옮기기': 'Move to center of screen', '항상 위에 두기': 'Keep on top', '이 위젯 닫기': 'Close this widget',
     '위젯을 오른쪽 클릭하면 모양과 내용을 바꿀 수 있어요.': 'Right-click a widget to change its shape and contents.',
-    '바탕화면 위젯': 'Desktop widget', '바탕화면 위젯 켜고 끄기': 'Toggle desktop widget', '위젯을 다른 창 위에 띄우기': 'Float widgets above windows',
+    '바탕화면 위젯': 'Desktop widget', '바탕화면 위젯 켜고 끄기': 'Toggle desktop widget', '위젯을 다른 창 위에 띄우기': 'Float widgets above windows', '가장 많이 찬 것': 'Fullest', '메뉴바와 위젯의 큰 숫자에 보일 한도예요.': 'Which limit the menu bar and the widget\'s big number show.', '{0} 한도': '{0} limit',
   };
 
   // T('원문 {0}', 값…) → 언어에 맞는 글자

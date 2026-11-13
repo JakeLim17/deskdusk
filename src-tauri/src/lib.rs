@@ -223,6 +223,22 @@ fn show_main(app: &tauri::AppHandle) {
     }
 }
 
+/// 20초마다 모든 창의 화면에 갱신을 알린다(세 번에 한 번은 새로 읽기).
+/// 대시보드 창이 숨겨지면 화면 쪽 타이머가 멈춰 메뉴바와 위젯 값이 처음 값에 머물렀다(2026-11-14 측정: 숨김 3분에 1번, 보임 3분에 6번).
+fn start_ticker(app: tauri::AppHandle) {
+    std::thread::spawn(move || {
+        let mut n: u64 = 0;
+        loop {
+            std::thread::sleep(std::time::Duration::from_secs(20));
+            n += 1;
+            let full = n % 3 == 0;
+            for (_, w) in app.webview_windows() {
+                let _ = w.eval(&format!("window.__twTick && window.__twTick({full})"));
+            }
+        }
+    });
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
@@ -266,6 +282,7 @@ pub fn run() {
                 trace("처음 실행: 위젯을 켠 상태로 시작");
             }
             widget::open_all(app.handle());
+            start_ticker(app.handle().clone());
             // 위젯 메뉴에서 고른 항목은 그 위젯 화면으로 돌려보낸다.
             app.on_menu_event(|app, event| {
                 if let Some((label, item)) = widget::menu_target(event.id().as_ref()) {

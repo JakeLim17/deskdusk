@@ -463,19 +463,33 @@ function setPreview(on) {
 // 메뉴바 요약. 'each'는 화면에 남긴 서비스마다 가장 많이 찬 한도를, 'top'은 전체에서 가장 많이 찬 한도 하나와 남은 시간을 보여준다.
 let trayMode = 'each', lastTray = null;
 try { if (localStorage.getItem('tw-tray') === 'top') trayMode = 'top'; } catch (e) {}
+// 서비스마다 메뉴바와 위젯 큰 숫자에 보일 한도. 없거나 'auto'면 가장 많이 찬 것.
+// 값은 한도 길이(분)와 이름표로 정한다(예: '10080', '10080:Fable'). 고른 한도가 지금 없으면 가장 많이 찬 것으로 돌아간다.
+let picks = {};
+try { picks = JSON.parse(localStorage.getItem('tw-pick') || '{}') || {}; } catch (e) {}
+const winKey = (w) => String(w.window_minutes) + (w.label ? ':' + w.label : '');
+function picked(wins) {
+  const live = wins.filter((w) => !w.expired).sort((a, b) => b.win.used_percent - a.win.used_percent);
+  return PROVIDERS.map((p) => {
+    const mine = live.filter((w) => w.provider.key === p.key);
+    const want = picks[p.key];
+    return (want && want !== 'auto' && mine.find((w) => winKey(w.win) === want)) || mine[0];
+  }).filter(Boolean);
+}
+const pickedTop = (wins) => picked(wins).sort((a, b) => b.win.used_percent - a.win.used_percent)[0];
+
 function trayTitle(wins, total) {
   const now = Date.now() / 1000;
-  const live = wins.filter((w) => !w.expired).sort((a, b) => b.win.used_percent - a.win.used_percent);
-  if (!live.length) return T('오늘 {0}', fmtTokens(total));
-  const best = PROVIDERS.map((p) => live.find((w) => w.provider.key === p.key)).filter(Boolean);
+  const best = picked(wins);
+  if (!best.length) return T('오늘 {0}', fmtTokens(total));
   if (trayMode === 'each' && best.length > 1) return best.map((w) => `${w.provider.name} ${fmtPct(w.win.used_percent)}`).join(' · ');
-  const top = live[0];
+  const top = pickedTop(wins);
   const left = top.win.resets_at > now ? ` · ${fmtLeft(top.win.resets_at - now)}` : '';
   return `${top.provider.name} ${fmtPct(top.win.used_percent)}${left}`;
 }
 // 윈도우 트레이의 숫자 아이콘에 쓸 값: 가장 많이 찬 한도와 그 서비스의 색. 한도가 없으면 null.
 function trayBadge(wins) {
-  const top = wins.filter((w) => !w.expired).sort((a, b) => b.win.used_percent - a.win.used_percent)[0];
+  const top = pickedTop(wins);
   return top ? { pct: top.win.used_percent, color: top.provider.color } : null;
 }
 function setTrayMode(m) {
@@ -483,6 +497,28 @@ function setTrayMode(m) {
   document.querySelectorAll('#tray-mode button').forEach((b) => b.classList.toggle('on', b.dataset.m === trayMode));
   try { localStorage.setItem('tw-tray', trayMode); } catch (e) {}
   if (invoke && lastTray) invoke('set_tray_title', { title: trayTitle(lastTray.wins, lastTray.total), badge: trayBadge(lastTray.wins) }).catch(() => {});
+}
+
+// 설정의 「메뉴바에 표시」 아래: 서비스마다 어떤 한도를 보일지 고르는 단추. 지금 읽힌 한도로 만든다.
+function renderPick(wins) {
+  const box = $('tray-pick');
+  if (!box) return;
+  const rows = PROVIDERS.map((p) => {
+    const mine = wins.filter((w) => w.provider.key === p.key && !w.expired);
+    if (mine.length < 2) return '';
+    const cur = picks[p.key] && mine.some((w) => winKey(w.win) === picks[p.key]) ? picks[p.key] : 'auto';
+    const btn = (v, label) => `<button data-p="${p.key}" data-v="${esc(v)}" class="${cur === v ? 'on' : ''}">${esc(label)}</button>`;
+    return `<div class="row sm" style="margin-top:.45em;gap:.6em;justify-content:flex-start"><span style="min-width:4.5em">${p.name}</span><span class="seg" style="flex-wrap:wrap;border-radius:1em" role="group" aria-label="${esc(T('{0} 한도', p.name))}">${btn('auto', T('가장 많이 찬 것'))}${mine.map((w) => btn(winKey(w.win), winLabel(w.win))).join('')}</span></div>`;
+  }).join('');
+  box.innerHTML = rows ? `<div class="mut sm wrapok" style="margin-top:.5em">${T('메뉴바와 위젯의 큰 숫자에 보일 한도예요.')}</div>${rows}` : '';
+}
+function setPick(key, value) {
+  picks[key] = value;
+  try { localStorage.setItem('tw-pick', JSON.stringify(picks)); } catch (e) {}
+  if (lastTray) {
+    renderPick(lastTray.wins);
+    if (invoke) invoke('set_tray_title', { title: trayTitle(lastTray.wins, lastTray.total), badge: trayBadge(lastTray.wins) }).catch(() => {});
+  }
 }
 
 function render(data) {
@@ -518,6 +554,7 @@ function render(data) {
     renderMini(wins, total, perMinute, data);
     return;
   }
+  renderPick(wins);
   // 메뉴바 요약과 알림은 대시보드 창만 보낸다(위젯 창과 겹치지 않게).
   if (invoke) {
     const title = trayTitle(wins, total);
@@ -532,7 +569,7 @@ function renderMini(wins, total, perMinute, data) {
   lastMini = { wins, total, perMinute, data };
   const now = Date.now() / 1000, has = (k) => WOPTS.items.includes(k);
   const live = wins.filter((w) => !w.expired).sort((a, b) => b.win.used_percent - a.win.used_percent);
-  const top = live[0];
+  const top = pickedTop(wins);
   $('m-scene').textContent = has('scene') ? $('sc-main').textContent : '';
   if (top) {
     $('m-pct').textContent = fmtPct(top.win.used_percent);
@@ -664,6 +701,10 @@ paintFilter();
 $('tray-mode').addEventListener('click', (e) => {
   const b = e.target.closest('button');
   if (b) setTrayMode(b.dataset.m);
+});
+$('tray-pick').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-p]');
+  if (b) setPick(b.dataset.p, b.dataset.v);
 });
 setTrayMode(trayMode);
 if (invoke) $('tray-opts').style.display = '';
@@ -830,5 +871,14 @@ if (invoke) {
 tickClock();
 setInterval(tickClock, 1000);
 refresh();
-setInterval(refresh, 60000);
-setInterval(() => latest && render(latest), 20000);
+// 앱에서는 본체가 20초마다 __twTick 을 불러 준다. 창이 숨겨지면 화면 쪽 타이머가 멈추기 때문이다(2026-11-14 측정).
+// 1분마다 새로 읽고, 그 사이에는 남은 시간 표시만 다시 그린다. 브라우저 미리보기에서는 화면 쪽 타이머를 쓴다.
+window.__twTick = (full) => {
+  tickClock();
+  if (full) refresh();
+  else if (latest) render(latest);
+};
+if (!invoke) {
+  setInterval(refresh, 60000);
+  setInterval(() => latest && render(latest), 20000);
+}

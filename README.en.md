@@ -4,7 +4,7 @@
 
 A desktop app that shows how much you have used your AI coding tools as a **landscape**. The fuller your limits get, the later the day becomes; the faster you burn tokens, the rougher the weather. You can read your status at a glance without reading numbers.
 
-> A personal prototype (0.1.0), built and checked on macOS (Apple Silicon). The same file also contains an Intel build, checked under Rosetta (not on a real Intel Mac). The macOS release is signed with an Apple Developer ID and notarized. A Windows installer can be built too, but it has not been run on a real Windows machine and is unsigned, so installing it shows a warning.
+> A personal prototype (0.1.1), built and checked on macOS (Apple Silicon). The same file also contains an Intel build, checked under Rosetta (not on a real Intel Mac). The macOS release is signed with an Apple Developer ID and notarized. A Windows installer can be built too, but it has not been run on a real Windows machine and is unsigned, so installing it shows a warning.
 
 ![Dashboard](Docs/screenshots/dashboard.jpg)
 
@@ -20,8 +20,8 @@ Screenshots show the Korean UI with sample numbers and project names; the app al
 
 Get it from the [releases page](../../releases/latest).
 
-- **macOS (Apple Silicon and Intel)**: open `DeskDusk-0.1.0-universal.dmg` and drag DeskDusk into Applications. The file is notarized by Apple, so it opens right away.
-- **Windows (x64)**: run `DeskDusk_0.1.0_x64-setup.exe`. It is not code-signed, so if SmartScreen warns you, choose "More info → Run anyway". The Windows build has not been tested much on real PCs.
+- **macOS (Apple Silicon and Intel)**: open `DeskDusk-0.1.1-universal.dmg` and drag DeskDusk into Applications. The file is notarized by Apple, so it opens right away.
+- **Windows (x64)**: run `DeskDusk_0.1.1_x64-setup.exe`. It is not code-signed, so if SmartScreen warns you, choose "More info → Run anyway". It was installed and run on a clean Windows install, but has not been tested much on PCs with real usage.
 
 On first launch one widget floats above your windows; use the menu bar (tray on Windows) icon to open the dashboard and toggle widgets.
 
