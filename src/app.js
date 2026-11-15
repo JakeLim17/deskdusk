@@ -708,6 +708,14 @@ $('tray-pick').addEventListener('click', (e) => {
 });
 setTrayMode(trayMode);
 if (invoke) $('tray-opts').style.display = '';
+// 디스크 이미지 안이나 임시 위치에서 실행 중이면 응용 프로그램 폴더로 옮기라고 알린다(대시보드만).
+if (invoke && !WIDGET) invoke('install_place').then((place) => {
+  if (place !== 'dmg' && place !== 'translocated') return;
+  const tip = $('move-tip');
+  tip.textContent = T('응용 프로그램 폴더로 옮겨 주세요');
+  tip.title = T('지금은 내려받은 파일 안에서 바로 실행 중이에요. 종료한 뒤 DeskDusk를 응용 프로그램 폴더로 끌어 놓고 거기서 실행해 주세요. 그래야 디스크를 꺼내도 꺼지지 않고 새 판으로 바꾸기도 쉬워요.');
+  tip.hidden = false;
+}).catch(() => {});
 // 알림(기본 꺼짐)과 언어
 $('alerts').checked = alertsOn;
 $('alerts').addEventListener('change', (e) => {

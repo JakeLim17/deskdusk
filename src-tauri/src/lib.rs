@@ -83,6 +83,29 @@ fn set_claude_connect(on: bool) -> Result<connect::Status, String> {
     }
 }
 
+/// 앱이 어디서 실행 중인지 경로로 판단한다(맥).
+/// "dmg": 디스크 이미지를 열어 그 안에서 바로 실행(/Volumes/<디스크>/<앱>.app). 디스크를 꺼내면 꺼지고 다음 판으로 바꿀 때 헷갈린다.
+/// "translocated": 내려받기 폴더 등에서 바로 열어 macOS가 임시 위치로 옮겨 실행. "ok": 그 밖(응용 프로그램 폴더 등).
+pub fn place_of(exe: &str) -> &'static str {
+    let parts: Vec<&str> = exe.split('/').collect();
+    // ["", "Volumes", "<디스크>", "<앱>.app", ...]
+    if parts.len() > 3 && parts[1] == "Volumes" && parts[3].ends_with(".app") {
+        "dmg"
+    } else if exe.contains("/AppTranslocation/") {
+        "translocated"
+    } else {
+        "ok"
+    }
+}
+
+#[tauri::command]
+fn install_place() -> &'static str {
+    if !cfg!(target_os = "macos") {
+        return "ok";
+    }
+    std::env::current_exe().map(|p| place_of(&p.to_string_lossy())).unwrap_or("ok")
+}
+
 /// 선택 기능 「정확한 Claude 한도 가져오기」가 켜져 있는지.
 #[tauri::command]
 fn get_claude_direct() -> bool {
@@ -303,7 +326,23 @@ pub fn run() {
             tauri::WindowEvent::Moved(_) | tauri::WindowEvent::Resized(_) if window.label().starts_with(widget::LABEL_PREFIX) => widget::remember(window),
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![get_usage, set_tray_title, get_autostart, set_autostart, notify, set_menu_labels, get_connect_status, set_claude_connect, get_widget, set_widget, widget_drag, open_dashboard, add_widget, remove_widget, set_widget_opts, widget_resize, widget_menu, widget_to_primary, widget_set_top, get_claude_direct, set_claude_direct])
+        .invoke_handler(tauri::generate_handler![get_usage, set_tray_title, get_autostart, set_autostart, notify, set_menu_labels, get_connect_status, set_claude_connect, get_widget, set_widget, widget_drag, open_dashboard, add_widget, remove_widget, set_widget_opts, widget_resize, widget_menu, widget_to_primary, widget_set_top, get_claude_direct, set_claude_direct, install_place])
         .run(tauri::generate_context!())
         .expect("앱을 시작하지 못했습니다");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::place_of;
+
+    #[test]
+    fn 디스크_이미지_안에서_실행하면_알아챈다() {
+        assert_eq!(place_of("/Volumes/DeskDusk/DeskDusk.app/Contents/MacOS/deskdusk"), "dmg");
+        assert_eq!(place_of("/Volumes/DeskDusk 1/DeskDusk.app/Contents/MacOS/deskdusk"), "dmg");
+        assert_eq!(place_of("/private/var/folders/x/T/AppTranslocation/ABC/d/DeskDusk.app/Contents/MacOS/deskdusk"), "translocated");
+        assert_eq!(place_of("/Applications/DeskDusk.app/Contents/MacOS/deskdusk"), "ok");
+        assert_eq!(place_of("/Users/a/Applications/DeskDusk.app/Contents/MacOS/deskdusk"), "ok");
+        // 외장 디스크의 폴더 안에 둔 앱(개발 빌드 등)은 디스크 이미지로 보지 않는다.
+        assert_eq!(place_of("/Volumes/Work/Builds/x/DeskDusk.app/Contents/MacOS/deskdusk"), "ok");
+    }
 }
