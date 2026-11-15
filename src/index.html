@@ -7,6 +7,7 @@
 <style>
 :root{--acc:#ffe0a8;--s1:#2a1b4d;--s2:#7b3f7a;--s3:#e2725b;--s4:#ffb86b;--far:#3a2a55;--near:#1a1228;--lit:1;--star:.25;--dark:.6;--orb:#ffd9a0;--w1:#5a3560;--w2:#1c1430;--sill:#3a2418;--ga:#333;--gb:#222;--gc:#111;--gd:#000}
 *{box-sizing:border-box;margin:0}
+[hidden]{display:none!important}
 html,body{height:100%;background:#0c0a12}
 body{display:flex;align-items:center;justify-content:center;font-family:-apple-system,"Apple SD Gothic Neo","Pretendard","Segoe UI","Malgun Gothic",sans-serif;color:#fff;overflow:hidden}
 .stage{position:relative;width:100vw;height:100vh;container-type:size;overflow:hidden}
@@ -291,7 +292,7 @@ button.pill[aria-expanded="true"]{background:rgba(255,255,255,.26)}
   </div>
   <div id="wm">ChronoCode</div>
   <div class="top">
-    <div><span class="pill"><b>DeskDusk</b></span><span class="pill"><span class="dot" id="agdot"></span><span id="agents">확인 중</span></span><span class="pill" id="move-tip" hidden style="background:rgba(226,114,91,.6)">응용 프로그램 폴더로 옮겨 주세요</span></div>
+    <div><span class="pill"><b>DeskDusk</b></span><span class="pill"><span class="dot" id="agdot"></span><span id="agents">확인 중</span></span><button class="pill" id="update-tip" hidden style="background:rgba(111,227,184,.45)"></button><span class="pill" id="move-tip" hidden style="background:rgba(226,114,91,.6)">응용 프로그램 폴더로 옮겨 주세요</span></div>
     <div>
       <button class="pill" id="set-open" aria-expanded="false">설정</button>
     </div>
@@ -316,6 +317,8 @@ button.pill[aria-expanded="true"]{background:rgba(255,255,255,.26)}
       <div><button class="pill" id="widget-add" style="font-size:.9em;padding:.25em .8em">위젯 하나 더 띄우기</button></div>
       <div class="mut wrapok" style="font-size:.92em">위젯을 오른쪽 클릭하면 모양과 내용을 바꿀 수 있어요.</div>
       <label><input type="checkbox" id="autostart">로그인할 때 자동 실행</label>
+      <label><input type="checkbox" id="update-on">새 판 알림</label>
+      <div class="mut wrapok" style="font-size:.92em">하루 한 번 GitHub에 최신 판을 물어봐요. 판 번호 말고는 아무것도 보내지 않아요.</div>
     </div>
     <div id="alert-opts" style="display:none">
       <div class="set">알림</div>

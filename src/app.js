@@ -762,7 +762,7 @@ $('wl-done').addEventListener('click', () => $('welcome').classList.remove('on')
   try { localStorage.setItem('tw-onboarded', '1'); } catch (e) {}
   openWelcome();
 })();
-if (invoke && !WIDGET) invoke('set_menu_labels', { show: T('대시보드 열기'), widget: T('바탕화면 위젯 켜고 끄기'), quit: T('종료'), top: T('위젯을 다른 창 위에 띄우기') }).catch(() => {});
+if (invoke && !WIDGET) invoke('set_menu_labels', { show: T('대시보드 열기'), widget: T('바탕화면 위젯 켜고 끄기'), quit: T('종료'), top: T('위젯을 다른 창 위에 띄우기'), update: T('새 판 {0} 받기') }).catch(() => {});
 // 바탕화면 위젯 창: 끌어서 옮기고, 두 번 누르거나 단추를 누르면 대시보드를 연다. 설정이 바뀌면 다시 그린다.
 // 위젯 메뉴(오른쪽 클릭): 모양, 보여 줄 항목, 서비스, 풍경을 위젯마다 바꾼다.
 const WIDGET_SHAPES = [['scene', '풍경과 숫자'], ['strip', '숫자 띠'], ['frame', '풍경만']];
@@ -870,6 +870,32 @@ if (invoke) {
     box.disabled = true;
     try {
       box.checked = !!(await invoke('set_autostart', { on: want }));
+    } catch (e) {
+      box.checked = !want;
+    }
+    box.disabled = false;
+  });
+}
+// 새 판 알림: 본체가 하루 한 번 확인하고 __twUpdate 로 알려 준다. 새 판이 있으면 머리 줄에 단추를 띄운다.
+if (invoke && !WIDGET) {
+  const tip = $('update-tip'), box = $('update-on');
+  let url = null;
+  window.__twUpdate = (info) => {
+    url = info && info.newer ? info.url : null;
+    tip.hidden = !url;
+    if (url) {
+      tip.textContent = T('새 판 {0} 받기', info.newer);
+      tip.title = T('지금 판은 {0}이에요. 누르면 내려받는 페이지가 열려요.', info.current);
+    }
+    box.checked = !!(info && info.on);
+  };
+  tip.addEventListener('click', () => { if (url) invoke('open_release', { url }).catch(() => {}); });
+  invoke('get_update').then(window.__twUpdate).catch(() => {});
+  box.addEventListener('change', async () => {
+    const want = box.checked;
+    box.disabled = true;
+    try {
+      window.__twUpdate(await invoke('set_update', { on: want }));
     } catch (e) {
       box.checked = !want;
     }

@@ -4,7 +4,7 @@
 
 A desktop app that shows how much you have used your AI coding tools as a **landscape**. The fuller your limits get, the later the day becomes; the faster you burn tokens, the rougher the weather. You can read your status at a glance without reading numbers.
 
-> A personal prototype (0.1.2), built and checked on macOS (Apple Silicon). The same file also contains an Intel build, checked under Rosetta (not on a real Intel Mac). The macOS release is signed with an Apple Developer ID and notarized. A Windows installer can be built too, but it has not been run on a real Windows machine and is unsigned, so installing it shows a warning.
+> A personal prototype (0.1.3), built and checked on macOS (Apple Silicon). The same file also contains an Intel build, checked under Rosetta (not on a real Intel Mac). The macOS release is signed with an Apple Developer ID and notarized. The Windows installer has been installed and run on a clean Windows install; it is unsigned, so installing it shows a warning.
 
 ![Dashboard](Docs/screenshots/dashboard.jpg)
 
@@ -20,8 +20,8 @@ Screenshots show the Korean UI with sample numbers and project names; the app al
 
 Get it from the [releases page](../../releases/latest).
 
-- **macOS (Apple Silicon and Intel)**: open `DeskDusk-0.1.2-universal.dmg` drag DeskDusk into Applications, and open it from there (running it straight from the dmg shows a reminder). The file is notarized by Apple, so it opens right away.
-- **Windows (x64)**: run `DeskDusk_0.1.2_x64-setup.exe`. It is not code-signed, so if SmartScreen warns you, choose "More info → Run anyway". It was installed and run on a clean Windows install, but has not been tested much on PCs with real usage.
+- **macOS (Apple Silicon and Intel)**: open `DeskDusk-0.1.3-universal.dmg`, drag DeskDusk into Applications, and open it from there (running it straight from the dmg shows a reminder). The file is notarized by Apple, so it opens right away.
+- **Windows (x64)**: run `DeskDusk_0.1.3_x64-setup.exe`. It is not code-signed, so if SmartScreen warns you, choose "More info → Run anyway". It was installed and run on a clean Windows install, but has not been tested much on PCs with real usage.
 
 On first launch one widget floats above your windows; use the menu bar (tray on Windows) icon to open the dashboard and toggle widgets.
 
@@ -53,14 +53,15 @@ Claude limits need a connection because Claude Code does not write them to its l
 - **Last 7 days** — a stacked bar per day for Claude and Codex
 - **If billed via API** — today's and the week's tokens converted at API list price (an estimate, not your subscription fee)
 - **At this pace** — an estimate of when you will hit a limit at your average pace
-- **11 scenes** — City, Sea, Blossom, Lake, Neon, Palace, Observatory, and four workspaces (Developer, Designer, Writer, Café). All react to usage.
+- **11 scenes** — City, Sea, Cherry Blossom, Lake, Neon, Palace, Observatory, and four workspaces (Developer, Designer, Writer, Café). All react to usage.
 - **4 kinds of weather** — rain, snow, dust, thunderstorm. "By season" follows the month.
 - **Your own layout** — drag cards, resize them from the corner, lock them, hide the ones you do not need, and choose which services to show. Everything is in Settings and is kept between launches.
 - **Desktop widgets** — small borderless windows shown on every desktop. You can open several, and right-clicking a widget lets you pick its shape (scene and numbers, number strip, scene only), what it shows, which services, and which scene. By default a widget floats above other windows; turn off "Keep on top" for a widget, or "Float widgets above windows" in the menu bar menu, to keep it on the desktop behind them (it still shows on top for about 3 seconds when you turn it on or move it). Drag to move; double-click to open the dashboard. These are not macOS system widgets from the widget gallery; toggle them in Settings or from the menu bar menu.
-- **Menu bar summary** — the fullest limit of each service stays visible after you close the window ("Claude 26% · Codex 3%"). The Windows tray cannot show text, so the icon itself is drawn as the fullest limit's number (background in the service color) and hovering shows the full summary. If the icon sits in the overflow area (^), drag it onto the taskbar.
+- **Menu bar summary** — one limit per service stays visible after you close the window ("Claude 26% · Codex 3%"). By default it is the fullest one; under Settings → Menu bar shows you can pick which limit to show for each service (5-hour, weekly, or weekly per model), and the widget's big number follows the same choice. The Windows tray cannot show text, so the icon itself is drawn as the fullest limit's number (background in the service color) and hovering shows the full summary. If the icon sits in the overflow area (^), drag it onto the taskbar.
 - **Limit alerts** — a notification when a limit passes 80% and 95%. Off by default; turn it on in Settings.
 - **Korean and English** — switch in Settings. The first launch follows the system language.
 - **Launch at login** — off by default. When enabled, it starts in the menu bar without opening the window.
+- **Update check** — once a day DeskDusk asks GitHub whether a newer version exists, and if so shows an "Update to …" button in the dashboard and the menu bar menu. Only the app version is sent. Turn it off in Settings.
 
 ## How the scene changes
 
@@ -83,7 +84,7 @@ It is calculated from `src-tauri/pricing.json` (US dollars per million tokens). 
 
 ## Where the data comes from
 
-By default, only local logs on this computer. No credentials (keychain or auth files) are opened and nothing is sent over the network. The only exception is the opt-in "Fetch exact Claude limits" below.
+By default, only local logs on this computer. No credentials (keychain or auth files) are opened. The only network requests are the once-a-day update check to GitHub (which sends nothing but the app version and can be turned off in Settings) and the opt-in "Fetch exact Claude limits" below.
 
 | Value | Source |
 |---|---|
@@ -153,7 +154,7 @@ On macOS, turning it on creates one file, `~/Library/LaunchAgents/dev.chronocode
 
 ## Tests
 
-Automated tests for the core (log reading, deduplication, 7-day history, cost, limit connection, widget settings, parsing the server response; 42 tests):
+Automated tests for the core (log reading, deduplication, 7-day history, cost, limit connection, widget settings, parsing the server response, update check, and more):
 
 ```bash
 cd src-tauri && cargo test --lib
@@ -163,7 +164,7 @@ Serve the `src` folder with any static server to see the UI with sample data. Ad
 
 ## Known limitations
 
-- Verified on macOS only. The code has Windows paths in place and `.github/workflows/windows-build.yml` builds an installer on GitHub's Windows runner, but it has not been run on a real Windows machine.
+- The Windows installer is built and smoke-tested on GitHub's Windows runner (`.github/workflows/windows-build.yml`): it installs, starts, and shows the widget and tray icon. It has not been tested much on PCs with real usage.
 - Gemini CLI and Grok CLI are not supported yet.
 - The first read can take a few seconds (about 4 seconds for 2.6 GB of logs from the last 7 days). After that only new lines are read.
 - "Active sessions" counts log files written in the last 3 minutes, which can differ from what is really running.

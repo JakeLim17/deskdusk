@@ -23,14 +23,14 @@
     '분당 {0}': '{0}/min', '캐시 비중 {0}': 'cache share {0}', '오늘은 아직 태운 토큰이 없어요.': 'No tokens burned yet today.',
     // 한도
     '미연결': 'Not connected', '준비 중': 'Coming soon', '{0}를 설치하면 여기에 표시돼요.': 'Install {0} to see it here.',
-    '{0} 사용량은 아직 읽지 못해요.': '{0} usage is not supported yet.', '초기화됐어요. 다음 사용 때 갱신돼요': 'Reset. Updates on next use',
+    '{0} 사용량은 아직 읽지 못해요.': '{0} usage is not supported yet.', '초기화됐어요. 다음 사용 때 갱신돼요': 'Reset. Updates the next time you use it',
     '초기화까지 {0}': 'resets in {0}', '초기화 시각 정보가 없어요': 'No reset time available',
     '한도 값이 아직 없어요. 오늘 {0} 토큰': 'No limit data yet. {0} tokens today', '{0} 기준 · 오늘 {1} 토큰': 'as of {0} · {1} tokens today',
     // 예측
     '이 속도라면': 'At this pace', '· 추정값': '· estimate', '계산 중이에요': 'Calculating…', '도달': 'Full', '주의': 'Warning', '여유': 'OK',
     '{0} {1} 한도가 다 찼어요': '{0} {1} limit is full', '초기화까지 {0} · {1}': 'resets in {0} · {1}',
     '{0} {1} 한도가 거의 다 찼어요': '{0} {1} limit is almost full', '{0} 기준 {1} · 초기화까지 {2}': '{1} as of {0} · resets in {2}',
-    '{0} {1} 한도가 {2}쯤 도달해요': '{0} {1} limit will be hit around {2}', '초기화({0})보다 {1} 빨라요.': '{1} before it resets ({0}).',
+    '{0} {1} 한도가 {2}쯤 도달해요': '{0} {1} limit will be hit around {2}', '초기화({0})보다 {1} 빨라요.': 'That\'s {1} before it resets ({0}).',
     '지금 속도면 한도까지 여유가 있어요': 'At this pace you will stay under the limits', '한도 값이 아직 없어요': 'No limit data yet',
     'CLI를 한 번 쓰면 값이 기록돼요.': 'Use the CLI once to record a value.',
     // 풍경 글자
@@ -40,7 +40,7 @@
     '한도 {0} · {1}': 'Limit {0} · {1}', '한도 정보가 없어 실제 시각 기준이에요': 'No limit data, so this follows the real time of day',
     '미리보기 중이에요': 'Previewing',
     // 설정
-    '풍경': 'Scene', '도시': 'City', '바다': 'Sea', '벚꽃': 'Blossom', '호수': 'Lake', '네온': 'Neon', '궁궐': 'Palace', '첨성대': 'Observatory', '개발자': 'Developer', '디자이너': 'Designer', '작가': 'Writer', '카페': 'Café',
+    '풍경': 'Scene', '도시': 'City', '바다': 'Sea', '벚꽃': 'Cherry Blossom', '호수': 'Lake', '네온': 'Neon', '궁궐': 'Palace', '첨성대': 'Observatory', '개발자': 'Developer', '디자이너': 'Designer', '작가': 'Writer', '카페': 'Café',
     '빨리 태울 때의 날씨': 'Weather when burning fast', '날씨': 'Weather', '계절 따라': 'By season', '눈': 'Snow',
     '표시할 서비스': 'Services to show', '표시할 서비스(여러 개 선택)': 'Services to show (multi-select)', '서비스 선택': 'Services',
     '표시할 카드': 'Cards to show', '시계': 'Clock', '어디서 태웠나': 'Where it went', '그림 배경': 'Painted background',
@@ -72,8 +72,8 @@
     '연결 상태': 'Connections', '로그인하지 않아요': 'no sign-in', 'Codex 토큰과 한도': 'Codex tokens and limits',
     'DeskDusk는 기본 설정에서 Claude나 OpenAI에 접속하지 않아요. Claude Code와 Codex가 쓸 때마다 이 컴퓨터에 남기는 기록 파일을 읽을 뿐이에요.':
       'By default DeskDusk never connects to Claude or OpenAI. It only reads the log files that Claude Code and Codex write on this computer as you use them.',
-    '준비 없이 읽어요. Claude Code가 남긴 세션 기록에서 가져와요.': 'Works with no setup. Read from the session logs Claude Code writes.',
-    '준비 없이 읽어요. Codex가 남긴 세션 기록에서 가져와요.': 'Works with no setup. Read from the session logs Codex writes.',
+    '준비 없이 읽어요. Claude Code가 남긴 세션 기록에서 가져와요.': 'Works with no setup, using the session logs Claude Code writes.',
+    '준비 없이 읽어요. Codex가 남긴 세션 기록에서 가져와요.': 'Works with no setup, using the session logs Codex writes.',
     'Claude Code를 쓰면 여기에 표시돼요.': 'Shows up once you use Claude Code.', 'Codex를 쓰면 여기에 표시돼요.': 'Shows up once you use Codex.',
     '연결됨. 터미널에서 Claude Code를 쓸 때마다 새 값으로 바뀌어요.': 'Connected. Updates whenever you use Claude Code in a terminal.',
     '연결됨. 터미널에서 Claude Code를 한 번 쓰면 값이 들어와요.': 'Connected. Use Claude Code in a terminal once to get the first value.',
@@ -93,7 +93,7 @@
       'When on, DeskDusk asks Anthropic for your limits every 10 minutes using the Claude Code login stored on this computer. You may be asked to allow keychain access. The login is used only for that request and is never stored. Values are for the account signed in to terminal Claude Code. Off by default.',
     '켰어요. 곧 새 값으로 바뀌어요.': 'On. Values will update shortly.', '껐어요.': 'Off.',
     '로그인이 만료됐어요. Claude Code를 한 번 실행하면 다시 받아 와요.': 'Login expired. Run Claude Code once to refresh it.',
-    '로그인이 만료됐거나 권한이 없어요. Claude Code를 한 번 실행해 주세요.': 'Login expired or not permitted. Run Claude Code once.',
+    '로그인이 만료됐거나 권한이 없어요. Claude Code를 한 번 실행해 주세요.': 'Login expired or access was denied. Run Claude Code once.',
     '서버가 잠시 요청을 막았어요. 30분 뒤 다시 물어요.': 'The server is rate limiting requests. Will retry in 30 minutes.',
     '서버에 연결하지 못했어요.': 'Could not reach the server.', '서버 응답 형식이 바뀐 것 같아요.': 'The server response format seems to have changed.',
     'Claude Code 로그인 정보를 찾지 못했어요. 터미널에서 Claude Code에 로그인해 주세요.': 'No Claude Code login found. Sign in to Claude Code in a terminal.',
@@ -102,11 +102,11 @@
     '{0} {1} 한도가 {2}%를 넘었어요': '{0} {1} limit passed {2}%', '지금 {0} · 초기화까지 {1}': 'now {0} · resets in {1}',
     '대시보드 열기': 'Open dashboard', '종료': 'Quit',
     '모양': 'Shape', '풍경과 숫자': 'Scene and numbers', '숫자 띠': 'Number strip', '풍경만': 'Scene only',
-    '보여 줄 항목': 'Show', '풍경 글자': 'Scene words', '한도 막대': 'Limit bars', '초기화까지 남은 시간': 'Time until reset',
+    '보여 줄 항목': 'Show', '풍경 글자': 'Scene name', '한도 막대': 'Limit bars', '초기화까지 남은 시간': 'Time until reset',
     '오늘 토큰과 속도': 'Tokens today and rate', 'API 환산 비용': 'API-equivalent cost', '서비스': 'Services', '대시보드 따라가기': 'Follow dashboard',
     '위젯 하나 더 띄우기': 'Add another widget', '화면 가운데로 옮기기': 'Move to center of screen', '항상 위에 두기': 'Keep on top', '이 위젯 닫기': 'Close this widget',
     '위젯을 오른쪽 클릭하면 모양과 내용을 바꿀 수 있어요.': 'Right-click a widget to change its shape and contents.',
-    '바탕화면 위젯': 'Desktop widget', '바탕화면 위젯 켜고 끄기': 'Toggle desktop widget', '위젯을 다른 창 위에 띄우기': 'Float widgets above windows', '가장 많이 찬 것': 'Fullest', '응용 프로그램 폴더로 옮겨 주세요': 'Please move me to Applications', '지금은 내려받은 파일 안에서 바로 실행 중이에요. 종료한 뒤 DeskDusk를 응용 프로그램 폴더로 끌어 놓고 거기서 실행해 주세요. 그래야 디스크를 꺼내도 꺼지지 않고 새 판으로 바꾸기도 쉬워요.': 'DeskDusk is running straight from the downloaded file. Quit it, drag DeskDusk into the Applications folder, and open it from there, so it keeps running after you eject the disk and updates stay simple.', '메뉴바와 위젯의 큰 숫자에 보일 한도예요.': 'Which limit the menu bar and the widget\'s big number show.', '{0} 한도': '{0} limit',
+    '바탕화면 위젯': 'Desktop widget', '바탕화면 위젯 켜고 끄기': 'Toggle desktop widget', '위젯을 다른 창 위에 띄우기': 'Float widgets above windows', '가장 많이 찬 것': 'Fullest', '새 판 {0} 받기': 'Update to {0}', '새 판 알림': 'Check for updates', '하루 한 번 GitHub에 최신 판을 물어봐요. 판 번호 말고는 아무것도 보내지 않아요.': 'Checks GitHub once a day. Only the app version is sent.', '지금 판은 {0}이에요. 누르면 내려받는 페이지가 열려요.': 'You have version {0}. Click to open the download page.', '응용 프로그램 폴더로 옮겨 주세요': 'Move DeskDusk to Applications', '지금은 내려받은 파일 안에서 바로 실행 중이에요. 종료한 뒤 DeskDusk를 응용 프로그램 폴더로 끌어 놓고 거기서 실행해 주세요. 그래야 디스크를 꺼내도 꺼지지 않고 새 판으로 바꾸기도 쉬워요.': 'DeskDusk is running straight from the downloaded file. Quit it, drag DeskDusk into the Applications folder, and open it from there, so it keeps running after you eject the disk and updates stay simple.', '메뉴바와 위젯의 큰 숫자에 보일 한도예요.': 'Choose which limit the menu bar and the widget\'s big number show.', '{0} 한도': '{0} limit',
   };
 
   // T('원문 {0}', 값…) → 언어에 맞는 글자
