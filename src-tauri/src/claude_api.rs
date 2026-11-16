@@ -347,7 +347,7 @@ mod tests {
 class: "genp"
 attributes:
     "mdat"<timedate>=0x32  "20261110000000Z\000"
-    "svce"<blob>="Claude Code-credentials-9e70bd8d"
+    "svce"<blob>="Claude Code-credentials-a1b2c3d4"
 keychain: "/Users/a/Library/Keychains/login.keychain-db"
 class: "genp"
 attributes:
@@ -366,7 +366,7 @@ keychain: "/Users/a/Library/Keychains/login.keychain-db"
 attributes:
     "svce"<blob>="Claude Code-credentialsX"
 "#;
-        assert_eq!(keychain_services(dump), vec!["Claude Code-credentials", "Claude Code-credentials-9e70bd8d", "Claude Code-credentials-old"]);
+        assert_eq!(keychain_services(dump), vec!["Claude Code-credentials", "Claude Code-credentials-a1b2c3d4", "Claude Code-credentials-old"]);
         assert!(keychain_services("").is_empty());
         assert!(keychain_services("keychain: x\n    \"svce\"<blob>=\"Claude Code-credentials-\"\n").is_empty());
     }
