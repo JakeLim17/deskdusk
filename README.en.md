@@ -4,7 +4,7 @@
 
 A desktop app that shows how much you have used your AI coding tools as a **landscape**. The fuller your limits get, the later the day becomes; the faster you burn tokens, the rougher the weather. You can read your status at a glance without reading numbers.
 
-> A personal prototype (0.1.3), built and checked on macOS (Apple Silicon). The same file also contains an Intel build, checked under Rosetta (not on a real Intel Mac). The macOS release is signed with an Apple Developer ID and notarized. The Windows installer has been installed and run on a clean Windows install; it is unsigned, so installing it shows a warning.
+> A personal prototype (0.1.4), built and checked on macOS (Apple Silicon). The same file also contains an Intel build, checked under Rosetta (not on a real Intel Mac). The macOS release is signed with an Apple Developer ID and notarized. The Windows installer has been installed and run on a clean Windows install; it is unsigned, so installing it shows a warning.
 
 ![Dashboard](Docs/screenshots/dashboard.jpg)
 
@@ -20,8 +20,8 @@ Screenshots show the Korean UI with sample numbers and project names; the app al
 
 Get it from the [releases page](../../releases/latest).
 
-- **macOS (Apple Silicon and Intel)**: open `DeskDusk-0.1.3-universal.dmg`, drag DeskDusk into Applications, and open it from there (running it straight from the dmg shows a reminder). The file is notarized by Apple, so it opens right away.
-- **Windows (x64)**: run `DeskDusk_0.1.3_x64-setup.exe`. It is not code-signed, so if SmartScreen warns you, choose "More info → Run anyway". It was installed and run on a clean Windows install, but has not been tested much on PCs with real usage.
+- **macOS (Apple Silicon and Intel)**: open `DeskDusk-0.1.4-universal.dmg`, drag DeskDusk into Applications, and open it from there (running it straight from the dmg shows a reminder). The file is notarized by Apple, so it opens right away.
+- **Windows (x64)**: run `DeskDusk_0.1.4_x64-setup.exe`. It is not code-signed, so if SmartScreen warns you, choose "More info → Run anyway". It was installed and run on a clean Windows install, but has not been tested much on PCs with real usage.
 
 On first launch one widget floats above your windows; use the menu bar (tray on Windows) icon to open the dashboard and toggle widgets.
 
@@ -112,9 +112,10 @@ Known limitation: sessions in the Claude desktop app do not run the status line,
 
 The status line bridge only updates when you use Claude Code in a terminal, and it does not carry per-model weekly limits. If you mostly use the desktop app, the values drift. Turning on Settings → Connections → Fetch exact Claude limits does this:
 
-- Reads the Claude Code login stored on this computer (the `Claude Code-credentials` keychain item on macOS, `~/.claude/.credentials.json` elsewhere) and asks `https://api.anthropic.com/api/oauth/usage` for your limits every 10 minutes. These are the same values as Claude Code's `/usage` screen.
+- Reads the Claude Code login stored on this computer (the `Claude Code-credentials` keychain item on macOS, including items with a suffix after that name; `~/.claude/.credentials.json` elsewhere) and asks `https://api.anthropic.com/api/oauth/usage` for your limits every 10 minutes. These are the same values as Claude Code's `/usage` screen.
 - The login is used only for that request. It is never stored, logged, or modified (when it expires you are told to run Claude Code once).
-- macOS asks whether to allow keychain access when you turn it on.
+- When you turn it on, macOS asks for keychain access under the name "security". Enter your Mac password and choose "Always Allow". If you deny it, DeskDusk will not ask again until you turn the feature off and on.
+- You need to have signed in to Claude Code (`claude`) in a terminal once. If no login is found, the app tells you so.
 - Values are for the account signed in to terminal Claude Code, which may differ from the desktop app's account.
 - This is not an officially documented endpoint and may change or stop working at any time.
 

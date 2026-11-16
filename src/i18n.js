@@ -64,7 +64,7 @@
     '시작하기': 'Get started', '30초면 끝나요': 'takes 30 seconds', '바탕화면에 위젯을 띄웠어요': 'Your widget is on the desktop',
     '다른 창 위에 작게 떠 있어요. 바탕화면에 깔아 두려면 위젯을 오른쪽 클릭해 「항상 위에 두기」를 끄거나, 메뉴바 메뉴의 「위젯을 다른 창 위에 띄우기」를 끄세요. 모양과 내용도 오른쪽 클릭으로 바꿔요.': 'It floats above other windows. To keep it on the desktop instead, right-click the widget and turn off "Keep on top", or turn off "Float widgets above windows" in the menu bar menu. Right-click to change its shape and contents too.',
     'Claude 한도를 정확하게 볼까요?': 'Want exact Claude limits?',
-    '켜면 이 컴퓨터의 Claude Code 로그인 정보로 Anthropic 서버에 한도를 물어요. 켤 때 키체인 접근을 물어볼 수 있어요. 끄면 로컬 기록만 읽어요.': 'When on, DeskDusk asks Anthropic for your limits using the Claude Code login on this computer. You may be asked to allow keychain access. When off, only local logs are read.',
+    '켜면 이 컴퓨터의 Claude Code 로그인 정보로 Anthropic 서버에 한도를 물어요. 켜면 macOS가 「security」라는 이름으로 키체인 접근을 물어요. Mac 암호를 넣고 「항상 허용」을 눌러 주세요. 터미널에서 Claude Code(claude)에 한 번 로그인돼 있어야 해요. 끄면 로컬 기록만 읽어요.': 'When on, DeskDusk asks Anthropic for your limits using the Claude Code login on this computer. macOS will ask for keychain access under the name "security"; enter your Mac password and choose "Always Allow". You need to have signed in to Claude Code (claude) in a terminal once. When off, only local logs are read.',
     '컴퓨터를 켤 때 같이 켤까요?': 'Start with your computer?', '로그인할 때 창 없이 위젯과 메뉴바 요약만 올라와요.': 'At login, only the widget and menu bar summary appear, with no window.',
     '이 창은 닫아도 돼요. 메뉴바의 DeskDusk 아이콘에서 다시 열 수 있고, 모두 「설정」에서 나중에 바꿀 수 있어요.': 'You can close this window. Reopen it from the DeskDusk menu bar icon; everything can be changed later in Settings.',
     '끌어서 옮기기 · 오른쪽 클릭으로 꾸미기': 'Drag to move · Right-click to customize',
@@ -89,8 +89,8 @@
     '설정의 「연결 상태」에서 연결할 수 있어요.': 'Connect it under Settings → Connections.',
     // 정확한 Claude 한도 가져오기(선택 기능)
     '정확한 Claude 한도 가져오기': 'Fetch exact Claude limits', '서버에서 직접': 'from server', '서버 직접 조회 · {0}': 'fetched from server · {0}',
-    '켜면 이 컴퓨터에 저장된 Claude Code 로그인 정보로 Anthropic 서버에 한도를 10분마다 물어요. 켤 때 키체인 접근을 물어볼 수 있어요. 로그인 정보는 요청에만 쓰고 저장하지 않아요. 터미널 Claude Code에 로그인된 계정의 값이 나와요. 기본은 꺼짐이에요.':
-      'When on, DeskDusk asks Anthropic for your limits every 10 minutes using the Claude Code login stored on this computer. You may be asked to allow keychain access. The login is used only for that request and is never stored. Values are for the account signed in to terminal Claude Code. Off by default.',
+    '켜면 이 컴퓨터에 저장된 Claude Code 로그인 정보로 Anthropic 서버에 한도를 10분마다 물어요. 켜면 macOS가 「security」라는 이름으로 키체인 접근을 물어요. Mac 암호를 넣고 「항상 허용」을 눌러 주세요. 터미널에서 Claude Code(claude)에 한 번 로그인돼 있어야 해요. 로그인 정보는 요청에만 쓰고 저장하지 않아요. 터미널 Claude Code에 로그인된 계정의 값이 나와요. 기본은 꺼짐이에요.':
+      'When on, DeskDusk asks Anthropic for your limits every 10 minutes using the Claude Code login stored on this computer. macOS will ask for keychain access under the name "security"; enter your Mac password and choose "Always Allow". You need to have signed in to Claude Code (claude) in a terminal once. The login is used only for that request and is never stored. Values are for the account signed in to terminal Claude Code. Off by default.',
     '켰어요. 곧 새 값으로 바뀌어요.': 'On. Values will update shortly.', '껐어요.': 'Off.',
     '로그인이 만료됐어요. Claude Code를 한 번 실행하면 다시 받아 와요.': 'Login expired. Run Claude Code once to refresh it.',
     '로그인이 만료됐거나 권한이 없어요. Claude Code를 한 번 실행해 주세요.': 'Login expired or access was denied. Run Claude Code once.',
@@ -106,7 +106,7 @@
     '오늘 토큰과 속도': 'Tokens today and rate', 'API 환산 비용': 'API-equivalent cost', '서비스': 'Services', '대시보드 따라가기': 'Follow dashboard',
     '위젯 하나 더 띄우기': 'Add another widget', '화면 가운데로 옮기기': 'Move to center of screen', '항상 위에 두기': 'Keep on top', '이 위젯 닫기': 'Close this widget',
     '위젯을 오른쪽 클릭하면 모양과 내용을 바꿀 수 있어요.': 'Right-click a widget to change its shape and contents.',
-    '바탕화면 위젯': 'Desktop widget', '바탕화면 위젯 켜고 끄기': 'Toggle desktop widget', '위젯을 다른 창 위에 띄우기': 'Float widgets above windows', '가장 많이 찬 것': 'Fullest', '새 판 {0} 받기': 'Update to {0}', '새 판 알림': 'Check for updates', '하루 한 번 GitHub에 최신 판을 물어봐요. 판 번호 말고는 아무것도 보내지 않아요.': 'Checks GitHub once a day. Only the app version is sent.', '지금 판은 {0}이에요. 누르면 내려받는 페이지가 열려요.': 'You have version {0}. Click to open the download page.', '응용 프로그램 폴더로 옮겨 주세요': 'Move DeskDusk to Applications', '지금은 내려받은 파일 안에서 바로 실행 중이에요. 종료한 뒤 DeskDusk를 응용 프로그램 폴더로 끌어 놓고 거기서 실행해 주세요. 그래야 디스크를 꺼내도 꺼지지 않고 새 판으로 바꾸기도 쉬워요.': 'DeskDusk is running straight from the downloaded file. Quit it, drag DeskDusk into the Applications folder, and open it from there, so it keeps running after you eject the disk and updates stay simple.', '메뉴바와 위젯의 큰 숫자에 보일 한도예요.': 'Choose which limit the menu bar and the widget\'s big number show.', '{0} 한도': '{0} limit',
+    '바탕화면 위젯': 'Desktop widget', '바탕화면 위젯 켜고 끄기': 'Toggle desktop widget', '위젯을 다른 창 위에 띄우기': 'Float widgets above windows', '가장 많이 찬 것': 'Fullest', '이 컴퓨터에 Claude Code 로그인 정보가 없어요. 터미널에서 claude를 실행해 로그인한 뒤 이 기능을 다시 켜 주세요.': 'No Claude Code login on this computer. Run claude in a terminal, sign in, then turn this on again.', '키체인 접근을 허락하지 않아 한도를 가져오지 못했어요. 이 기능을 껐다 켜면 다시 물어요(「security」 창에서 「항상 허용」).': 'Keychain access was not allowed, so limits could not be fetched. Turn this off and on to be asked again (choose "Always Allow" in the "security" window).', '새 판 {0} 받기': 'Update to {0}', '새 판 알림': 'Check for updates', '하루 한 번 GitHub에 최신 판을 물어봐요. 판 번호 말고는 아무것도 보내지 않아요.': 'Checks GitHub once a day. Only the app version is sent.', '지금 판은 {0}이에요. 누르면 내려받는 페이지가 열려요.': 'You have version {0}. Click to open the download page.', '응용 프로그램 폴더로 옮겨 주세요': 'Move DeskDusk to Applications', '지금은 내려받은 파일 안에서 바로 실행 중이에요. 종료한 뒤 DeskDusk를 응용 프로그램 폴더로 끌어 놓고 거기서 실행해 주세요. 그래야 디스크를 꺼내도 꺼지지 않고 새 판으로 바꾸기도 쉬워요.': 'DeskDusk is running straight from the downloaded file. Quit it, drag DeskDusk into the Applications folder, and open it from there, so it keeps running after you eject the disk and updates stay simple.', '메뉴바와 위젯의 큰 숫자에 보일 한도예요.': 'Choose which limit the menu bar and the widget\'s big number show.', '{0} 한도': '{0} limit',
   };
 
   // T('원문 {0}', 값…) → 언어에 맞는 글자
@@ -117,8 +117,8 @@
   function plat(s) {
     if (!WIN || typeof s !== 'string') return s;
     return s
-      .replace(' 켤 때 키체인 접근을 물어볼 수 있어요.', '')
-      .replace(' You may be asked to allow keychain access.', '')
+      .replace(' 켜면 macOS가 「security」라는 이름으로 키체인 접근을 물어요. Mac 암호를 넣고 「항상 허용」을 눌러 주세요. 터미널에서 Claude Code(claude)에 한 번 로그인돼 있어야 해요.', ' Claude Code(claude)에 한 번 로그인돼 있어야 해요.')
+      .replace(' macOS will ask for keychain access under the name \"security\"; enter your Mac password and choose \"Always Allow\". You need to have signed in to Claude Code (claude) in a terminal once.', ' You need to have signed in to Claude Code (claude) once.')
       .replace(/메뉴바/g, '트레이')
       .replace(/Menu bar/g, 'Tray')
       .replace(/menu bar/g, 'tray');

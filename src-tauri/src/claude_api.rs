@@ -129,14 +129,82 @@ fn token_from(json: &str) -> Option<(String, i64)> {
     Some((token, to_seconds(&o["expiresAt"])))
 }
 
-fn read_credentials(home: &Path) -> Result<String, String> {
-    if cfg!(target_os = "macos") {
-        let out = Command::new("/usr/bin/security").args(["find-generic-password", "-s", KEYCHAIN_SERVICE, "-w"]).stderr(Stdio::null()).output().map_err(|e| e.to_string())?;
-        if out.status.success() {
-            return String::from_utf8(out.stdout).map_err(|_| "로그인 정보를 읽지 못했어요.".to_string());
+const NOT_FOUND: &str = "이 컴퓨터에 Claude Code 로그인 정보가 없어요. 터미널에서 claude를 실행해 로그인한 뒤 이 기능을 다시 켜 주세요.";
+const DENIED: &str = "키체인 접근을 허락하지 않아 한도를 가져오지 못했어요. 이 기능을 껐다 켜면 다시 물어요(「security」 창에서 「항상 허용」).";
+/// 거부했을 때는 사용자가 다시 켤 때까지 묻지 않는다(키체인 창이 반복해 뜨지 않게).
+const PAUSED: i64 = i64::MAX / 4;
+
+/// 로그인 정보를 읽지 못한 까닭.
+#[derive(Debug, PartialEq)]
+enum CredError {
+    /// 저장된 로그인 정보가 없음
+    NotFound,
+    /// 키체인 접근을 거부했거나 창을 닫음
+    Denied,
+    Other(String),
+}
+
+/// 키체인 항목 목록(`security dump-keychain`의 겉 정보, 비밀 값은 없음)에서
+/// 이름이 「Claude Code-credentials」이거나 그 뒤에 「-접미사」가 붙은 서비스 이름을 고른다.
+/// Claude Code는 설정 폴더를 따로 쓰면 이름 뒤에 접미사를 붙여 저장한다.
+/// 정확한 이름을 먼저, 그다음은 최근에 바뀐 것부터 돌려준다.
+fn keychain_services(dump: &str) -> Vec<String> {
+    let mut found: Vec<(bool, String, String)> = Vec::new();
+    for block in dump.split("keychain: ") {
+        let attr = |key: &str| -> Option<String> {
+            let tag = format!("\"{key}\"");
+            let line = block.lines().find(|l| l.trim_start().starts_with(&tag))?;
+            let start = line.find("=\"")? + 2;
+            let rest = &line[start..];
+            Some(rest[..rest.rfind('"')?].to_string())
+        };
+        let Some(svce) = attr("svce") else { continue };
+        let ok = svce == KEYCHAIN_SERVICE || svce.strip_prefix(KEYCHAIN_SERVICE).is_some_and(|t| t.starts_with('-') && t.len() > 1);
+        if ok && !found.iter().any(|(_, s, _)| *s == svce) {
+            found.push((svce == KEYCHAIN_SERVICE, svce, attr("mdat").unwrap_or_default()));
         }
     }
-    std::fs::read_to_string(home.join(".claude").join(".credentials.json")).map_err(|_| "Claude Code 로그인 정보를 찾지 못했어요. 터미널에서 Claude Code에 로그인해 주세요.".to_string())
+    found.sort_by(|a, b| b.0.cmp(&a.0).then(b.2.cmp(&a.2)));
+    found.into_iter().map(|(_, s, _)| s).collect()
+}
+
+#[cfg(target_os = "macos")]
+fn read_keychain() -> Result<String, CredError> {
+    let dump = Command::new("/usr/bin/security").arg("dump-keychain").stderr(Stdio::null()).output().map(|o| String::from_utf8_lossy(&o.stdout).to_string()).unwrap_or_default();
+    let mut services = keychain_services(&dump);
+    if services.is_empty() {
+        // 목록을 못 읽었을 때를 대비해 정확한 이름으로 한 번은 묻는다.
+        services.push(KEYCHAIN_SERVICE.to_string());
+    }
+    for svc in services {
+        let out = Command::new("/usr/bin/security").args(["find-generic-password", "-s", &svc, "-w"]).stderr(Stdio::null()).output().map_err(|e| CredError::Other(e.to_string()))?;
+        match out.status.code() {
+            Some(0) => return String::from_utf8(out.stdout).map_err(|_| CredError::Other("로그인 정보를 읽지 못했어요.".into())),
+            // 44: 그런 항목이 없음
+            Some(44) => continue,
+            // 그 밖(사용자가 거부하거나 창을 닫음 등): 다른 항목을 더 묻지 않는다(창이 또 뜨므로).
+            _ => return Err(CredError::Denied),
+        }
+    }
+    Err(CredError::NotFound)
+}
+
+fn read_credentials(home: &Path) -> Result<String, CredError> {
+    #[cfg(target_os = "macos")]
+    match read_keychain() {
+        Ok(s) => return Ok(s),
+        Err(CredError::NotFound) => {}
+        Err(e) => return Err(e),
+    }
+    std::fs::read_to_string(home.join(".claude").join(".credentials.json")).map_err(|_| CredError::NotFound)
+}
+
+fn cred_message(e: CredError) -> (String, i64) {
+    match e {
+        CredError::NotFound => (NOT_FOUND.to_string(), INTERVAL),
+        CredError::Denied => (DENIED.to_string(), PAUSED),
+        CredError::Other(m) => (m, INTERVAL),
+    }
 }
 
 /// 서버에 묻는다. 토큰이 명령줄에 드러나지 않도록 curl 설정을 표준 입력으로 넘긴다.
@@ -162,7 +230,7 @@ fn request(token: &str) -> Result<(u16, String), String> {
 
 fn fetch(home: &Path, now: i64) -> Result<Limits, (String, i64)> {
     let soon = |m: &str| (m.to_string(), INTERVAL);
-    let (token, expires) = token_from(&read_credentials(home).map_err(|e| (e, INTERVAL))?).ok_or_else(|| soon("Claude Code 로그인 정보를 읽지 못했어요."))?;
+    let (token, expires) = token_from(&read_credentials(home).map_err(cred_message)?).ok_or_else(|| soon("Claude Code 로그인 정보를 읽지 못했어요."))?;
     if expires > 0 && expires <= now {
         return Err(soon("로그인이 만료됐어요. Claude Code를 한 번 실행하면 다시 받아 와요."));
     }
@@ -180,7 +248,10 @@ fn fetch(home: &Path, now: i64) -> Result<Limits, (String, i64)> {
 pub fn debug_shape() -> String {
     let home = usage::home();
     let now = chrono::Local::now().timestamp();
-    let Ok(cred) = read_credentials(&home) else { return "로그인 정보 없음".into() };
+    let cred = match read_credentials(&home) {
+        Ok(c) => c,
+        Err(e) => return format!("로그인 정보 없음: {e:?}"),
+    };
     let Some((token, expires)) = token_from(&cred) else { return "로그인 정보 형식 오류".into() };
     if expires > 0 && expires <= now {
         return "로그인 만료".into();
@@ -221,7 +292,7 @@ pub fn current(home: &Path, now: i64) -> Option<(Option<Limits>, Option<String>)
             }
             Err((msg, wait)) => {
                 s.note = Some(msg);
-                s.next_at = now + wait;
+                s.next_at = now.saturating_add(wait);
             }
         }
     }
@@ -268,6 +339,46 @@ mod tests {
         assert_eq!((t.as_str(), e), ("시험용-토큰", 1_794_000_000));
         assert!(token_from("{}").is_none());
         assert!(token_from("깨짐").is_none());
+    }
+
+    #[test]
+    fn 키체인_목록에서_로그인_항목만_고른다() {
+        let dump = r#"keychain: "/Users/a/Library/Keychains/login.keychain-db"
+class: "genp"
+attributes:
+    "mdat"<timedate>=0x32  "20261110000000Z\000"
+    "svce"<blob>="Claude Code-credentials-9e70bd8d"
+keychain: "/Users/a/Library/Keychains/login.keychain-db"
+class: "genp"
+attributes:
+    "mdat"<timedate>=0x32  "20261101000000Z\000"
+    "svce"<blob>="Claude Code-credentials-old"
+keychain: "/Users/a/Library/Keychains/login.keychain-db"
+class: "genp"
+attributes:
+    "mdat"<timedate>=0x32  "20261001000000Z\000"
+    "svce"<blob>="Claude Code-credentials"
+keychain: "/Users/a/Library/Keychains/login.keychain-db"
+class: "genp"
+attributes:
+    "svce"<blob>="Claude Safe Storage"
+keychain: "/Users/a/Library/Keychains/login.keychain-db"
+attributes:
+    "svce"<blob>="Claude Code-credentialsX"
+"#;
+        assert_eq!(keychain_services(dump), vec!["Claude Code-credentials", "Claude Code-credentials-9e70bd8d", "Claude Code-credentials-old"]);
+        assert!(keychain_services("").is_empty());
+        assert!(keychain_services("keychain: x\n    \"svce\"<blob>=\"Claude Code-credentials-\"\n").is_empty());
+    }
+
+    #[test]
+    fn 없으면_10분_뒤에_다시_묻고_거부하면_다시_켤_때까지_묻지_않는다() {
+        assert_eq!(cred_message(CredError::NotFound), (NOT_FOUND.to_string(), INTERVAL));
+        let (m, wait) = cred_message(CredError::Denied);
+        assert_eq!(m, DENIED);
+        assert!(wait > 100 * 365 * 24 * 3600);
+        // 다음 물을 시각을 더해도 넘치지 않는다.
+        assert!(1_800_000_000i64.saturating_add(wait) > 1_800_000_000);
     }
 
     #[test]
