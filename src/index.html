@@ -114,6 +114,9 @@ button.pill[aria-expanded="true"]{background:rgba(255,255,255,.26)}
 .shape-strip #m-sub,.shape-strip #m-pace{font-size:.68em;margin-top:.3em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .widget.shape-strip #wm{font-size:clamp(8px,min(10vh,1.8vw),16px);right:.9em;bottom:.4em}
 .cn{margin-top:.8em;display:grid;gap:.55em}
+.wl-page{display:none}.wl-page.on{display:block}
+.wl-t{font-weight:600;margin-top:.5em}
+.wl-cmd{display:block;margin-top:.4em;padding:.35em .5em;border-radius:.4em;background:rgba(0,0,0,.35);font-size:.85em;white-space:pre-wrap;word-break:break-all;user-select:all;-webkit-user-select:all}
 .cn>div{display:grid;grid-template-columns:1.2em 1fr;gap:.5em;align-items:start;font-size:.9em}
 .cn .dot{width:.7em;height:.7em;border-radius:50%;margin-top:.3em;background:#9aa0b4}
 .cn .ok .dot{background:#6fe3b8}.cn .warn .dot{background:#ffbe6e}
@@ -335,6 +338,7 @@ button.pill[aria-expanded="true"]{background:rgba(255,255,255,.26)}
       <button class="pill" id="pv-open" aria-expanded="false">풍경 미리보기</button>
       <button class="pill" id="src-open" aria-expanded="false">값의 출처</button>
       <button class="pill" id="cn-open" aria-expanded="false">연결 상태</button>
+      <button class="pill" id="wl-open">처음 사용 안내</button>
     </div>
     <div class="row" style="margin-top:.7em;justify-content:flex-start;align-items:center">
       <button class="pill" id="pos-reset">카드 위치·크기 처음으로</button>
@@ -354,14 +358,40 @@ button.pill[aria-expanded="true"]{background:rgba(255,255,255,.26)}
   </div>
 
   <div class="glass panel" id="welcome">
-    <div class="h" style="padding-right:3.6em"><span>시작하기</span><span class="sm">30초면 끝나요</span></div>
-    <div class="cn">
-      <div class="ok"><i class="dot"></i><div><b>바탕화면에 위젯을 띄웠어요</b><span class="d">다른 창 위에 작게 떠 있어요. 바탕화면에 깔아 두려면 위젯을 오른쪽 클릭해 「항상 위에 두기」를 끄거나, 메뉴바 메뉴의 「위젯을 다른 창 위에 띄우기」를 끄세요. 모양과 내용도 오른쪽 클릭으로 바꿔요.</span></div></div>
-      <div id="wl-direct-row"><i class="dot"></i><div><b>Claude 한도를 정확하게 볼까요?</b><span class="d">켜면 이 컴퓨터의 Claude Code 로그인 정보로 Anthropic 서버에 한도를 물어요. 켜면 macOS가 「security」라는 이름으로 키체인 접근을 물어요. Mac 암호를 넣고 「항상 허용」을 눌러 주세요. 터미널에서 Claude Code(claude)에 한 번 로그인돼 있어야 해요. 끄면 로컬 기록만 읽어요.</span><label class="sm" style="display:flex;align-items:center;gap:.5em;margin:.4em 0 0;cursor:pointer;justify-content:flex-start"><input type="checkbox" id="wl-direct" style="width:auto;accent-color:#ffd08a">정확한 Claude 한도 가져오기</label></div></div>
-      <div id="wl-auto-row"><i class="dot"></i><div><b>컴퓨터를 켤 때 같이 켤까요?</b><span class="d">로그인할 때 창 없이 위젯과 메뉴바 요약만 올라와요.</span><label class="sm" style="display:flex;align-items:center;gap:.5em;margin:.4em 0 0;cursor:pointer;justify-content:flex-start"><input type="checkbox" id="wl-auto" style="width:auto;accent-color:#ffd08a">로그인할 때 자동 실행</label></div></div>
+    <div class="h" style="padding-right:3.6em"><span>처음 사용 안내</span><span class="sm" id="wl-step">1 / 4</span></div>
+    <div class="wl-page on" data-s="1">
+      <div class="wl-t">풍경으로 보는 사용량</div>
+      <div class="cn">
+        <div class="ok"><i class="dot"></i><div><b>한도가 찰수록 하루가 저물어요</b><span class="d">아침에서 한낮, 노을, 밤으로 바뀌어요. 빨리 쓸수록 날씨가 거칠어져요.</span></div></div>
+        <div class="ok"><i class="dot"></i><div><b>오른쪽 위 「사용 한도」</b><span class="d">서비스마다 5시간·주간 한도와 초기화까지 남은 시간이 나와요.</span></div></div>
+        <div class="ok"><i class="dot"></i><div><b>나머지 카드</b><span class="d">오늘 쓴 토큰, 최근 7일, 어느 프로젝트에서 썼는지, API로 썼다면 얼마였을지 보여 줘요. 카드는 끌어서 옮기고 설정에서 숨길 수 있어요.</span></div></div>
+      </div>
     </div>
-    <div class="row" style="margin-top:.9em;justify-content:flex-start;align-items:center;gap:.7em"><button class="pill" id="wl-done">시작하기</button></div>
-    <div class="mut sm wrapok" style="margin-top:.6em">이 창은 닫아도 돼요. 메뉴바의 DeskDusk 아이콘에서 다시 열 수 있고, 모두 「설정」에서 나중에 바꿀 수 있어요.</div>
+    <div class="wl-page" data-s="2">
+      <div class="wl-t">Claude 연결</div>
+      <div class="cn">
+        <div class="ok"><i class="dot"></i><div><b>토큰 사용량은 바로 보여요</b><span class="d">Claude Code를 쓰면 이 컴퓨터에 남는 기록을 읽어요. 로그인하지 않아요.</span></div></div>
+        <div id="wl-cc-row"><i class="dot"></i><div><b>Claude Code가 필요해요</b><span class="d">Pro 이상 요금제에서 쓸 수 있어요. 터미널에서 아래 명령으로 설치하고, 새 터미널에서 claude를 실행해 로그인해요.</span><code class="wl-cmd" id="wl-cmd"></code></div></div>
+        <div id="wl-lim-row"><i class="dot"></i><div><b>한도(%)는 한 번 연결해요</b><span class="d" id="wl-lim-d">Claude Code는 한도 값을 기록에 남기지 않아서, 상태줄로 넘겨주는 값을 받아 적도록 한 번 연결해요. 그 뒤 터미널에서 Claude Code를 쓸 때마다 값이 바뀌어요.</span><div class="row" style="margin-top:.4em;justify-content:flex-start;gap:.6em;align-items:center"><button class="pill" id="wl-connect" style="font-size:.9em;padding:.25em .8em">Claude 한도 연결하기</button><span class="sm wrapok" id="wl-cn-msg"></span></div></div></div>
+      </div>
+    </div>
+    <div class="wl-page" data-s="3">
+      <div class="wl-t">Codex</div>
+      <div class="cn">
+        <div class="ok"><i class="dot"></i><div><b>준비할 것이 없어요</b><span class="d">Codex CLI를 쓰면 토큰과 한도가 기록에 남아 그대로 보여 줘요.</span></div></div>
+        <div class="ok"><i class="dot"></i><div><b>안 쓰는 서비스는 끄세요</b><span class="d">설정의 「표시할 서비스」에서 화면에 남길 서비스를 골라요.</span></div></div>
+      </div>
+    </div>
+    <div class="wl-page" data-s="4">
+      <div class="wl-t">위젯과 메뉴바</div>
+      <div class="cn">
+        <div class="ok"><i class="dot"></i><div><b>바탕화면에 위젯을 띄웠어요</b><span class="d">다른 창 위에 작게 떠 있어요. 바탕화면에 깔아 두려면 위젯을 오른쪽 클릭해 「항상 위에 두기」를 끄거나, 메뉴바 메뉴의 「위젯을 다른 창 위에 띄우기」를 끄세요. 모양과 내용도 오른쪽 클릭으로 바꿔요.</span></div></div>
+        <div class="ok"><i class="dot"></i><div><b>메뉴바에 보일 한도를 고를 수 있어요</b><span class="d">설정의 「메뉴바에 표시」에서 서비스마다 5시간, 주간 등 보일 한도를 골라요. 위젯의 큰 숫자도 같이 바뀌어요.</span></div></div>
+        <div id="wl-auto-row"><i class="dot"></i><div><b>컴퓨터를 켤 때 같이 켤까요?</b><span class="d">로그인할 때 창 없이 위젯과 메뉴바 요약만 올라와요.</span><label class="sm" style="display:flex;align-items:center;gap:.5em;margin:.4em 0 0;cursor:pointer;justify-content:flex-start"><input type="checkbox" id="wl-auto" style="width:auto;accent-color:#ffd08a">로그인할 때 자동 실행</label></div></div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:.9em;justify-content:flex-start;align-items:center;gap:.6em"><button class="pill" id="wl-prev">이전</button><button class="pill" id="wl-next">다음</button><button class="pill" id="wl-done" hidden>시작하기</button></div>
+    <div class="mut sm wrapok" style="margin-top:.6em">설정의 「처음 사용 안내」에서 언제든 다시 볼 수 있어요.</div>
   </div>
 
   <div class="glass panel" id="connect">
@@ -370,11 +400,6 @@ button.pill[aria-expanded="true"]{background:rgba(255,255,255,.26)}
     <div class="cn" id="cn-list"></div>
     <div class="row" style="margin-top:.8em;justify-content:flex-start;align-items:center;gap:.7em"><button class="pill" id="cn-btn" style="display:none"></button><span class="sm mut wrapok" id="cn-msg"></span></div>
     <div class="mut sm wrapok" style="margin-top:.7em" id="cn-help"></div>
-    <div id="direct-opts" style="display:none;margin-top:.9em;border-top:1px solid rgba(255,255,255,.15);padding-top:.8em">
-      <div class="checks" style="grid-template-columns:1fr"><label><input type="checkbox" id="direct-on">정확한 Claude 한도 가져오기</label></div>
-      <div class="mut sm wrapok" style="margin-top:.4em">켜면 이 컴퓨터에 저장된 Claude Code 로그인 정보로 Anthropic 서버에 한도를 10분마다 물어요. 켜면 macOS가 「security」라는 이름으로 키체인 접근을 물어요. Mac 암호를 넣고 「항상 허용」을 눌러 주세요. 터미널에서 Claude Code(claude)에 한 번 로그인돼 있어야 해요. 로그인 정보는 요청에만 쓰고 저장하지 않아요. 터미널 Claude Code에 로그인된 계정의 값이 나와요. 기본은 꺼짐이에요.</div>
-      <div class="sm wrapok" style="margin-top:.3em;color:#ffd9a8" id="direct-msg"></div>
-    </div>
   </div>
 
   <div class="glass panel" id="sources">

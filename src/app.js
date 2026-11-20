@@ -130,7 +130,7 @@ function renderProviders(data) {
   $('provs').innerHTML = PROVIDERS.filter((p) => shown(p.key)).map((p) => {
     const d = data[p.key] || {};
     const tag = !d.found ? T('미연결') : p.unsupported ? T('준비 중') : d.plan ? esc(d.plan.charAt(0).toUpperCase() + d.plan.slice(1)) : '';
-    const head = `<div class="row"><span class="name"><span class="sw" style="background:${p.color}"></span>${p.name}${tag ? ` <span class="tag">${tag}</span>` : ''}</span><span class="mut sm">${d.found ? (d.limits_source === 'direct' ? T('서버에서 직접') : p.source) : ''}</span></div>`;
+    const head = `<div class="row"><span class="name"><span class="sw" style="background:${p.color}"></span>${p.name}${tag ? ` <span class="tag">${tag}</span>` : ''}</span><span class="mut sm">${d.found ? p.source : ''}</span></div>`;
     let body = '';
     if (!d.found) {
       body = `<div class="mut sm" style="margin-top:.4em">${T('{0}를 설치하면 여기에 표시돼요.', p.source)}</div>`;
@@ -291,9 +291,7 @@ function renderSources(data) {
   const logs = T('세션 기록 · {0}', fmtAgo(now - data.generated_at));
   const rows = [
     [T('Claude 토큰'), data.claude.found ? logs : T('기록 없음')],
-    [T('Claude 한도'), data.claude.limits_source === 'direct'
-      ? T('서버 직접 조회 · {0}', when(data.claude.limits_observed_at))
-      : data.claude.primary || data.claude.secondary ? T('상태줄 · {0}', when(data.claude.limits_observed_at)) : T('상태줄 값 없음')],
+    [T('Claude 한도'), data.claude.primary || data.claude.secondary ? T('상태줄 · {0}', when(data.claude.limits_observed_at)) : T('상태줄 값 없음')],
     [T('Codex 토큰'), data.codex.found ? logs : T('기록 없음')],
     [T('Codex 한도'), data.codex.primary || data.codex.secondary ? T('세션 기록 · {0}', when(data.codex.limits_observed_at)) : T('값 없음')],
     ['Gemini', data.gemini.found ? T('지원 준비 중') : T('설치 안 됨')],
@@ -645,25 +643,6 @@ $('pv-real').addEventListener('click', () => setPreview(false));
 $('src-open').addEventListener('click', () => setSources(true));
 $('cn-open').addEventListener('click', () => setConnect(true));
 $('cn-btn').addEventListener('click', toggleClaudeConnect);
-// 선택 기능: 정확한 Claude 한도 가져오기(기본 꺼짐). 앱에서만 보인다.
-if (invoke && !WIDGET) {
-  const box = $('direct-on');
-  $('direct-opts').style.display = '';
-  invoke('get_claude_direct').then((on) => { box.checked = !!on; }).catch(() => {});
-  box.addEventListener('change', async () => {
-    const want = box.checked;
-    box.disabled = true;
-    try {
-      box.checked = !!(await invoke('set_claude_direct', { on: want }));
-      $('direct-msg').textContent = box.checked ? T('켰어요. 곧 새 값으로 바뀌어요.') : T('껐어요.');
-      refresh();
-    } catch (e) {
-      box.checked = !want;
-      $('direct-msg').textContent = String(e);
-    }
-    box.disabled = false;
-  });
-}
 $('pv-l').addEventListener('input', renderPreview);
 $('pv-r').addEventListener('input', renderPreview);
 function paintFilter() {
@@ -732,27 +711,78 @@ $('lang').addEventListener('click', (e) => {
   location.reload();
 });
 // 처음 실행: 「시작하기」 화면을 한 번 보여준다. 위젯은 본체가 이미 띄워 두었다.
+// 처음 사용 안내(4단계). 처음 켤 때 한 번 열리고, 설정의 「처음 사용 안내」로 다시 연다.
+let wlStep = 1, wlBound = false;
+function showWelcomeStep(n) {
+  wlStep = Math.max(1, Math.min(4, n));
+  document.querySelectorAll('#welcome .wl-page').forEach((p) => p.classList.toggle('on', Number(p.dataset.s) === wlStep));
+  $('wl-step').textContent = `${wlStep} / 4`;
+  $('wl-prev').hidden = wlStep === 1;
+  $('wl-next').hidden = wlStep === 4;
+  $('wl-done').hidden = wlStep !== 4;
+  if (wlStep === 2) renderWelcomeClaude();
+}
+// 2단계: 이 컴퓨터의 Claude Code 설치와 한도 연결 상태를 보여 주고, 연결 단추를 둔다.
+async function renderWelcomeClaude(message) {
+  $('wl-cmd').textContent = window.IS_WIN ? 'irm https://claude.ai/install.ps1 | iex' : 'curl -fsSL https://claude.ai/install.sh | bash';
+  const st = await loadConnect();
+  const lim = st ? st.claude_limits : 'not_connected';
+  $('wl-cc-row').className = st && lim !== 'no_claude' ? 'ok' : 'warn';
+  const btn = $('wl-connect');
+  let desc = T('Claude Code는 한도 값을 기록에 남기지 않아서, 상태줄로 넘겨주는 값을 받아 적도록 한 번 연결해요. 그 뒤 터미널에서 Claude Code를 쓸 때마다 값이 바뀌어요.');
+  let cls = 'warn';
+  btn.hidden = true;
+  if (lim === 'connected') {
+    cls = 'ok';
+    desc = st.claude_limits_seen ? T('연결됨. 터미널에서 Claude Code를 쓸 때마다 새 값으로 바뀌어요.') : T('연결됨. 터미널에서 Claude Code를 한 번 쓰면 값이 들어와요.');
+  } else if (lim === 'other_statusline') {
+    desc = T('다른 상태줄을 쓰고 있어 자동으로 연결하지 않아요. README의 안내대로 직접 연결할 수 있어요.');
+  } else if (lim === 'no_claude') {
+    desc = T('Claude Code를 설치하고 로그인한 뒤 이 단계로 다시 오면 연결할 수 있어요.');
+  } else if (st && !st.node) {
+    desc = T('연결하려면 Node.js가 필요해요.');
+  } else {
+    btn.hidden = false;
+  }
+  $('wl-lim-row').className = cls;
+  $('wl-lim-d').textContent = desc;
+  $('wl-cn-msg').textContent = message || '';
+}
 function openWelcome() {
   setPreview(false);
   setSources(false);
   setConnect(false);
   if (window.setSettings) window.setSettings(false);
   $('welcome').classList.add('on');
-  const bind = (boxId, getCmd, setCmd) => {
-    const box = $(boxId);
-    if (!invoke) return;
-    invoke(getCmd).then((on) => { box.checked = !!on; }).catch(() => {});
+  showWelcomeStep(1);
+  if (wlBound) return;
+  wlBound = true;
+  $('wl-prev').addEventListener('click', () => showWelcomeStep(wlStep - 1));
+  $('wl-next').addEventListener('click', () => showWelcomeStep(wlStep + 1));
+  $('wl-connect').addEventListener('click', async () => {
+    if (!invoke) return renderWelcomeClaude(T('앱에서만 동작해요'));
+    $('wl-connect').disabled = true;
+    try {
+      connectStatus = await invoke('set_claude_connect', { on: true });
+      await renderWelcomeClaude(T('연결했어요. 터미널에서 Claude Code를 한 번 쓰면 값이 들어와요.'));
+      refresh();
+    } catch (e) {
+      await renderWelcomeClaude(String(e));
+    }
+    $('wl-connect').disabled = false;
+  });
+  const box = $('wl-auto');
+  if (invoke) {
+    invoke('get_autostart').then((on) => { box.checked = !!on; }).catch(() => {});
     box.addEventListener('change', async () => {
       const want = box.checked;
       box.disabled = true;
-      try { box.checked = !!(await invoke(setCmd, { on: want })); } catch (e) { box.checked = !want; }
+      try { box.checked = !!(await invoke('set_autostart', { on: want })); } catch (e) { box.checked = !want; }
       box.disabled = false;
-      refresh();
     });
-  };
-  bind('wl-direct', 'get_claude_direct', 'set_claude_direct');
-  bind('wl-auto', 'get_autostart', 'set_autostart');
+  }
 }
+$('wl-open').addEventListener('click', openWelcome);
 $('wl-done').addEventListener('click', () => $('welcome').classList.remove('on'));
 (() => {
   if (WIDGET) return;

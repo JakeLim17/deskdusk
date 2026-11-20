@@ -1,5 +1,4 @@
 pub mod autostart;
-pub mod claude_api;
 pub mod connect;
 pub mod pricing;
 pub mod tray_badge;
@@ -105,19 +104,6 @@ fn install_place() -> &'static str {
         return "ok";
     }
     std::env::current_exe().map(|p| place_of(&p.to_string_lossy())).unwrap_or("ok")
-}
-
-/// 선택 기능 「정확한 Claude 한도 가져오기」가 켜져 있는지.
-#[tauri::command]
-fn get_claude_direct() -> bool {
-    claude_api::is_on()
-}
-
-/// 선택 기능을 켜거나 끈다. 켜면 로그인 정보로 서버에 한도를 묻는다.
-#[tauri::command]
-fn set_claude_direct(on: bool) -> Result<bool, String> {
-    trace(&format!("set_claude_direct: {on}"));
-    claude_api::set_on(on)
 }
 
 /// 한도 경고 알림을 보낸다. 화면의 「알림」 설정이 켜져 있을 때만 호출된다.
@@ -419,7 +405,7 @@ pub fn run() {
             tauri::WindowEvent::Moved(_) | tauri::WindowEvent::Resized(_) if window.label().starts_with(widget::LABEL_PREFIX) => widget::remember(window),
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![get_usage, set_tray_title, get_autostart, set_autostart, notify, set_menu_labels, get_connect_status, set_claude_connect, get_widget, set_widget, widget_drag, open_dashboard, add_widget, remove_widget, set_widget_opts, widget_resize, widget_menu, widget_to_primary, widget_set_top, get_claude_direct, set_claude_direct, install_place, get_update, set_update, open_release])
+        .invoke_handler(tauri::generate_handler![get_usage, set_tray_title, get_autostart, set_autostart, notify, set_menu_labels, get_connect_status, set_claude_connect, get_widget, set_widget, widget_drag, open_dashboard, add_widget, remove_widget, set_widget_opts, widget_resize, widget_menu, widget_to_primary, widget_set_top, install_place, get_update, set_update, open_release])
         .run(tauri::generate_context!())
         .expect("앱을 시작하지 못했습니다");
 }

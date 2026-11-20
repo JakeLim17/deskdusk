@@ -17,15 +17,6 @@ fn main() {
         println!("{}", serde_json::to_string_pretty(&deskdusk_lib::connect::status()).unwrap());
         return;
     }
-    // 점검용: 선택 기능이 켜져 있을 때 서버 응답의 모양을 출력한다(로그인 정보는 출력하지 않는다)
-    if std::env::args().any(|a| a == "--claude-usage-shape") {
-        if deskdusk_lib::claude_api::is_on() {
-            println!("{}", deskdusk_lib::claude_api::debug_shape());
-        } else {
-            println!("선택 기능이 꺼져 있어요.");
-        }
-        return;
-    }
     // Claude 한도 연결을 명령줄에서 하는 옵션(설정 파일은 백업 후 상태줄 항목만 바꾼다)
     if std::env::args().any(|a| a == "--connect-claude") {
         match deskdusk_lib::connect::connect() {
