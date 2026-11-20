@@ -34,6 +34,8 @@ pub struct Info {
     pub current: String,
     pub newer: Option<String>,
     pub url: Option<String>,
+    /// 받아 두어 다시 시작하면 바뀔 판(자동 업데이트). 본체가 채운다.
+    pub ready: Option<String>,
 }
 
 fn path(home: &Path) -> PathBuf {
@@ -84,7 +86,7 @@ pub fn parse_release(v: &Value) -> Option<(String, String)> {
 
 pub fn info_of(s: &State, current: &str) -> Info {
     let newer = s.latest.clone().filter(|l| !s.off && is_newer(l, current));
-    Info { on: !s.off, current: current.to_string(), url: newer.as_ref().and(s.url.clone()), newer }
+    Info { on: !s.off, current: current.to_string(), url: newer.as_ref().and(s.url.clone()), newer, ready: None }
 }
 
 /// 물어볼 때가 됐는지: 꺼져 있지 않고, 마지막 확인에서 하루(실패했으면 3시간)가 지났을 때.

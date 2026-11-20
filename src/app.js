@@ -130,7 +130,7 @@ function renderProviders(data) {
   $('provs').innerHTML = PROVIDERS.filter((p) => shown(p.key)).map((p) => {
     const d = data[p.key] || {};
     const tag = !d.found ? T('미연결') : p.unsupported ? T('준비 중') : d.plan ? esc(d.plan.charAt(0).toUpperCase() + d.plan.slice(1)) : '';
-    const head = `<div class="row"><span class="name"><span class="sw" style="background:${p.color}"></span>${p.name}${tag ? ` <span class="tag">${tag}</span>` : ''}</span><span class="mut sm">${d.found ? p.source : ''}</span></div>`;
+    const head = `<div class="row"><span class="name"><span class="sw" style="background:${p.color}"></span>${p.name}${tag ? ` <span class="tag">${tag}</span>` : ''}</span><span class="mut sm">${d.found ? (d.limits_source === 'direct' ? T('서버에서 직접') : p.source) : ''}</span></div>`;
     let body = '';
     if (!d.found) {
       body = `<div class="mut sm" style="margin-top:.4em">${T('{0}를 설치하면 여기에 표시돼요.', p.source)}</div>`;
@@ -291,7 +291,9 @@ function renderSources(data) {
   const logs = T('세션 기록 · {0}', fmtAgo(now - data.generated_at));
   const rows = [
     [T('Claude 토큰'), data.claude.found ? logs : T('기록 없음')],
-    [T('Claude 한도'), data.claude.primary || data.claude.secondary ? T('상태줄 · {0}', when(data.claude.limits_observed_at)) : T('상태줄 값 없음')],
+    [T('Claude 한도'), data.claude.limits_source === 'direct'
+      ? T('서버 직접 조회 · {0}', when(data.claude.limits_observed_at))
+      : data.claude.primary || data.claude.secondary ? T('상태줄 · {0}', when(data.claude.limits_observed_at)) : T('상태줄 값 없음')],
     [T('Codex 토큰'), data.codex.found ? logs : T('기록 없음')],
     [T('Codex 한도'), data.codex.primary || data.codex.secondary ? T('세션 기록 · {0}', when(data.codex.limits_observed_at)) : T('값 없음')],
     ['Gemini', data.gemini.found ? T('지원 준비 중') : T('설치 안 됨')],
@@ -643,6 +645,29 @@ $('pv-real').addEventListener('click', () => setPreview(false));
 $('src-open').addEventListener('click', () => setSources(true));
 $('cn-open').addEventListener('click', () => setConnect(true));
 $('cn-btn').addEventListener('click', toggleClaudeConnect);
+// 선택 기능: 정확한 Claude 한도 가져오기(기본 꺼짐). 약관 위험 경고에 「이해했어요」를 체크해야 켤 수 있다. 앱에서만 보인다.
+if (invoke && !WIDGET) {
+  const box = $('direct-on'), ack = $('direct-ack');
+  $('direct-opts').style.display = '';
+  const sync = () => { box.disabled = !box.checked && !ack.checked; };
+  invoke('get_claude_direct').then((on) => { box.checked = !!on; ack.checked = !!on; sync(); }).catch(() => {});
+  ack.addEventListener('change', sync);
+  box.addEventListener('change', async () => {
+    const want = box.checked;
+    if (want && !ack.checked) { box.checked = false; return; }
+    box.disabled = true;
+    try {
+      box.checked = !!(await invoke('set_claude_direct', { on: want }));
+      $('direct-msg').textContent = box.checked ? T('켰어요. 곧 새 값으로 바뀌어요.') : T('껐어요.');
+      refresh();
+    } catch (e) {
+      box.checked = !want;
+      $('direct-msg').textContent = String(e);
+    }
+    sync();
+  });
+  sync();
+}
 $('pv-l').addEventListener('input', renderPreview);
 $('pv-r').addEventListener('input', renderPreview);
 function paintFilter() {
@@ -792,7 +817,7 @@ $('wl-done').addEventListener('click', () => $('welcome').classList.remove('on')
   try { localStorage.setItem('tw-onboarded', '1'); } catch (e) {}
   openWelcome();
 })();
-if (invoke && !WIDGET) invoke('set_menu_labels', { show: T('대시보드 열기'), widget: T('바탕화면 위젯 켜고 끄기'), quit: T('종료'), top: T('위젯을 다른 창 위에 띄우기'), update: T('새 판 {0} 받기') }).catch(() => {});
+if (invoke && !WIDGET) invoke('set_menu_labels', { show: T('대시보드 열기'), widget: T('바탕화면 위젯 켜고 끄기'), quit: T('종료'), top: T('위젯을 다른 창 위에 띄우기'), update: T('새 판 {0} 받기'), ready: T('다시 시작해 {0}로 업데이트') }).catch(() => {});
 // 바탕화면 위젯 창: 끌어서 옮기고, 두 번 누르거나 단추를 누르면 대시보드를 연다. 설정이 바뀌면 다시 그린다.
 // 위젯 메뉴(오른쪽 클릭): 모양, 보여 줄 항목, 서비스, 풍경을 위젯마다 바꾼다.
 const WIDGET_SHAPES = [['scene', '풍경과 숫자'], ['strip', '숫자 띠'], ['frame', '풍경만']];
@@ -909,17 +934,24 @@ if (invoke) {
 // 새 판 알림: 본체가 하루 한 번 확인하고 __twUpdate 로 알려 준다. 새 판이 있으면 머리 줄에 단추를 띄운다.
 if (invoke && !WIDGET) {
   const tip = $('update-tip'), box = $('update-on');
-  let url = null;
+  let url = null, ready = null;
   window.__twUpdate = (info) => {
+    ready = info && info.ready ? info.ready : null;
     url = info && info.newer ? info.url : null;
-    tip.hidden = !url;
-    if (url) {
+    tip.hidden = !ready && !url;
+    if (ready) {
+      tip.textContent = T('다시 시작해 {0}로 업데이트', ready);
+      tip.title = T('새 판을 받아 두었어요. 누르면 바꾸고 다시 켜요. 앱을 종료할 때도 바뀌어요.');
+    } else if (url) {
       tip.textContent = T('새 판 {0} 받기', info.newer);
       tip.title = T('지금 판은 {0}이에요. 누르면 내려받는 페이지가 열려요.', info.current);
     }
     box.checked = !!(info && info.on);
   };
-  tip.addEventListener('click', () => { if (url) invoke('open_release', { url }).catch(() => {}); });
+  tip.addEventListener('click', () => {
+    if (ready) invoke('install_update').catch(() => {});
+    else if (url) invoke('open_release', { url }).catch(() => {});
+  });
   invoke('get_update').then(window.__twUpdate).catch(() => {});
   box.addEventListener('change', async () => {
     const want = box.checked;

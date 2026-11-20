@@ -320,8 +320,8 @@ button.pill[aria-expanded="true"]{background:rgba(255,255,255,.26)}
       <div><button class="pill" id="widget-add" style="font-size:.9em;padding:.25em .8em">위젯 하나 더 띄우기</button></div>
       <div class="mut wrapok" style="font-size:.92em">위젯을 오른쪽 클릭하면 모양과 내용을 바꿀 수 있어요.</div>
       <label><input type="checkbox" id="autostart">로그인할 때 자동 실행</label>
-      <label><input type="checkbox" id="update-on">새 판 알림</label>
-      <div class="mut wrapok" style="font-size:.92em">하루 한 번 GitHub에 최신 판을 물어봐요. 판 번호 말고는 아무것도 보내지 않아요.</div>
+      <label><input type="checkbox" id="update-on">자동 업데이트</label>
+      <div class="mut wrapok" style="font-size:.92em">하루 한 번 GitHub에서 새 판을 확인해 받아 두고, 다시 시작하거나 종료할 때 바꿔요. 판 번호 말고는 아무것도 보내지 않아요.</div>
     </div>
     <div id="alert-opts" style="display:none">
       <div class="set">알림</div>
@@ -373,6 +373,7 @@ button.pill[aria-expanded="true"]{background:rgba(255,255,255,.26)}
         <div class="ok"><i class="dot"></i><div><b>토큰 사용량은 바로 보여요</b><span class="d">Claude Code를 쓰면 이 컴퓨터에 남는 기록을 읽어요. 로그인하지 않아요.</span></div></div>
         <div id="wl-cc-row"><i class="dot"></i><div><b>Claude Code가 필요해요</b><span class="d">Pro 이상 요금제에서 쓸 수 있어요. 터미널에서 아래 명령으로 설치하고, 새 터미널에서 claude를 실행해 로그인해요.</span><code class="wl-cmd" id="wl-cmd"></code></div></div>
         <div id="wl-lim-row"><i class="dot"></i><div><b>한도(%)는 한 번 연결해요</b><span class="d" id="wl-lim-d">Claude Code는 한도 값을 기록에 남기지 않아서, 상태줄로 넘겨주는 값을 받아 적도록 한 번 연결해요. 그 뒤 터미널에서 Claude Code를 쓸 때마다 값이 바뀌어요.</span><div class="row" style="margin-top:.4em;justify-content:flex-start;gap:.6em;align-items:center"><button class="pill" id="wl-connect" style="font-size:.9em;padding:.25em .8em">Claude 한도 연결하기</button><span class="sm wrapok" id="wl-cn-msg"></span></div></div></div>
+        <div><i class="dot"></i><div><b>더 자세한 한도는 선택 기능이에요</b><span class="d">Fable 같은 모델별 한도나 데스크톱 앱에서 쓴 양까지 보려면 설정 → 연결 상태의 「정확한 Claude 한도 가져오기」를 켤 수 있어요. 약관상 위험이 있어 경고를 읽고 동의해야 켜져요.</span></div></div>
       </div>
     </div>
     <div class="wl-page" data-s="3">
@@ -400,6 +401,13 @@ button.pill[aria-expanded="true"]{background:rgba(255,255,255,.26)}
     <div class="cn" id="cn-list"></div>
     <div class="row" style="margin-top:.8em;justify-content:flex-start;align-items:center;gap:.7em"><button class="pill" id="cn-btn" style="display:none"></button><span class="sm mut wrapok" id="cn-msg"></span></div>
     <div class="mut sm wrapok" style="margin-top:.7em" id="cn-help"></div>
+    <div id="direct-opts" style="display:none;margin-top:.9em;border-top:1px solid rgba(255,255,255,.15);padding-top:.8em">
+      <div class="checks" style="grid-template-columns:1fr"><label><input type="checkbox" id="direct-on">정확한 Claude 한도 가져오기</label></div>
+      <div class="sm wrapok" style="margin-top:.4em;padding:.5em .6em;border-radius:.5em;background:rgba(226,114,91,.25);border:1px solid rgba(255,190,110,.45)">주의: 이 기능은 이 컴퓨터의 Claude Code 로그인 토큰으로 Anthropic 서버에 직접 물어요. Claude Code 공식 문서는 다른 개발자의 앱이 Claude 로그인 정보나 세션 토큰을 다루는 것을 허용하지 않고, Anthropic이 사전 통보 없이 계정에 조치할 수 있다고 적고 있어요. 위험을 이해하고 본인 책임으로 쓸 때만 켜세요.</div>
+      <div class="checks" style="grid-template-columns:1fr"><label><input type="checkbox" id="direct-ack">위 내용을 이해했어요</label></div>
+      <div class="mut sm wrapok" style="margin-top:.4em">켜면 Fable 같은 모델별 한도까지 10분마다 받아 와요. macOS가 「security」라는 이름으로 키체인 접근을 물으면 Mac 암호를 넣고 「항상 허용」을 눌러 주세요. 터미널에서 Claude Code(claude)에 한 번 로그인돼 있어야 해요. 로그인 정보는 요청에만 쓰고 저장하지 않아요. 기본은 꺼짐이에요.</div>
+      <div class="sm wrapok" style="margin-top:.3em;color:#ffd9a8" id="direct-msg"></div>
+    </div>
   </div>
 
   <div class="glass panel" id="sources">

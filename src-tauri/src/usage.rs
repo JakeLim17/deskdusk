@@ -508,6 +508,17 @@ fn collect_at(home: &Path, now: i64, start: i64, states: &mut HashMap<PathBuf, F
     let (codex, codex_active) = collect_kind(Kind::Codex, home.join(".codex").join("sessions"), &mut acc, states, &mut unpriced);
     let (mut claude, claude_active) = collect_kind(Kind::Claude, home.join(".claude").join("projects"), &mut acc, states, &mut unpriced);
     read_claude_bridge(home, &mut claude);
+    // 선택 기능(기본 꺼짐, 경고에 동의해야 켜짐): 서버에 직접 물은 값이 있으면 그것을 쓴다.
+    if let Some((limits, note)) = crate::claude_api::current(home, now) {
+        claude.limits_source = Some("direct".into());
+        claude.limits_note = note;
+        if let Some(l) = limits {
+            claude.primary = l.primary;
+            claude.secondary = l.secondary;
+            claude.more = l.more;
+            claude.limits_observed_at = Some(l.observed_at);
+        }
+    }
 
     let mut projects: Vec<ProjectUse> = acc.projects.into_values().collect();
     projects.sort_by(|a, b| b.total.cmp(&a.total));

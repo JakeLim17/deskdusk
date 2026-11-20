@@ -1,4 +1,5 @@
 pub mod autostart;
+pub mod claude_api;
 pub mod connect;
 pub mod pricing;
 pub mod tray_badge;
@@ -10,6 +11,7 @@ use std::sync::Mutex;
 use tauri::menu::{CheckMenuItem, Menu, MenuItem};
 use tauri::tray::TrayIconBuilder;
 use tauri::Manager;
+use tauri_plugin_updater::UpdaterExt;
 
 /// 로그 읽기는 파일 크기에 따라 오래 걸릴 수 있어 화면이 멈추지 않도록 별도 스레드에서 돈다.
 #[tauri::command]
@@ -123,12 +125,82 @@ struct TopItem(CheckMenuItem<tauri::Wry>);
 struct UpdateMenu {
     menu: Menu<tauri::Wry>,
     item: Mutex<Option<MenuItem<tauri::Wry>>>,
-    /// 화면 언어에 맞춘 글자 틀. {0} 자리에 판 번호가 들어간다.
-    template: Mutex<String>,
+    /// 화면 언어에 맞춘 글자 틀. {0} 자리에 판 번호가 들어간다. (새 판 받기, 다시 시작해 업데이트)
+    template: Mutex<(String, String)>,
+}
+
+/// 자동 업데이트: 받아 두었다가 다시 시작하거나 종료할 때 적용할 새 판.
+struct Pending(Mutex<Option<(tauri_plugin_updater::Update, Vec<u8>)>>);
+
+/// 지금 상태(새 판 확인 결과 + 받아 둔 판).
+fn update_info(app: &tauri::AppHandle) -> update::Info {
+    let mut info = update::info();
+    if let Some(p) = app.try_state::<Pending>() {
+        if let Ok(slot) = p.0.lock() {
+            info.ready = slot.as_ref().map(|(u, _)| u.version.clone());
+        }
+    }
+    info
+}
+
+/// 새 판이 있으면 받아 둔다(서명은 설치할 때 공개 키로 확인한다). latest.json이 없는 예전 판에서는 아무것도 하지 않는다.
+fn download_update(app: &tauri::AppHandle) {
+    let already = app.try_state::<Pending>().and_then(|p| p.0.lock().ok().and_then(|s| s.as_ref().map(|(u, _)| u.version.clone())));
+    let res = tauri::async_runtime::block_on(async {
+        let found = app.updater().map_err(|e| e.to_string())?.check().await.map_err(|e| e.to_string())?;
+        let Some(upd) = found else { return Ok(None) };
+        if already.as_deref() == Some(upd.version.as_str()) {
+            return Ok(None);
+        }
+        let bytes = upd.download(|_, _| {}, || {}).await.map_err(|e| e.to_string())?;
+        Ok::<_, String>(Some((upd, bytes)))
+    });
+    match res {
+        Ok(Some((upd, bytes))) => {
+            trace(&format!("새 판 받아 둠: {} ({}바이트)", upd.version, bytes.len()));
+            if let Some(p) = app.try_state::<Pending>() {
+                if let Ok(mut slot) = p.0.lock() {
+                    *slot = Some((upd, bytes));
+                }
+            }
+        }
+        Ok(None) => trace("자동 업데이트: 받을 판 없음"),
+        Err(e) => trace(&format!("자동 업데이트 받기 실패: {e}")),
+    }
+}
+
+/// 받아 둔 새 판을 설치한다. restart가 참이면 맥에서 다시 켠다(윈도우는 설치 프로그램이 앱을 닫고 이어 받는다).
+/// 받아 둔 판이 없으면 false.
+fn install_pending(app: &tauri::AppHandle, restart: bool) -> bool {
+    let Some(p) = app.try_state::<Pending>() else { return false };
+    let Some((upd, bytes)) = p.0.lock().ok().and_then(|mut s| s.take()) else { return false };
+    match upd.install(&bytes) {
+        Ok(()) => {
+            trace(&format!("새 판 설치: {}", upd.version));
+            if restart {
+                app.restart();
+            }
+            true
+        }
+        Err(e) => {
+            trace(&format!("새 판 설치 실패: {e}"));
+            false
+        }
+    }
+}
+
+/// 대시보드의 「다시 시작해 업데이트」 단추.
+#[tauri::command]
+fn install_update(app: tauri::AppHandle) -> Result<(), String> {
+    if install_pending(&app, true) {
+        Ok(())
+    } else {
+        Err("받아 둔 새 판이 없어요.".into())
+    }
 }
 
 #[tauri::command]
-fn set_menu_labels(app: tauri::AppHandle, state: tauri::State<MenuLabels>, top_item: tauri::State<TopItem>, show: String, widget: String, quit: String, top: Option<String>, update: Option<String>) {
+fn set_menu_labels(app: tauri::AppHandle, state: tauri::State<MenuLabels>, top_item: tauri::State<TopItem>, show: String, widget: String, quit: String, top: Option<String>, update: Option<String>, ready: Option<String>) {
     if let Ok(items) = state.0.lock() {
         for (item, text) in items.iter().zip([show, widget, quit]) {
             let _ = item.set_text(text);
@@ -139,18 +211,26 @@ fn set_menu_labels(app: tauri::AppHandle, state: tauri::State<MenuLabels>, top_i
     }
     if let (Some(text), Some(um)) = (update, app.try_state::<UpdateMenu>()) {
         if let Ok(mut t) = um.template.lock() {
-            *t = text;
+            t.0 = text;
+            if let Some(r) = ready {
+                t.1 = r;
+            }
         }
-        apply_update(&app, &update::info());
+        apply_update(&app, &update_info(&app));
     }
 }
 
 /// 새 판 정보를 메뉴바 메뉴와 대시보드에 반영한다.
 fn apply_update(app: &tauri::AppHandle, info: &update::Info) {
     if let Some(um) = app.try_state::<UpdateMenu>() {
-        let template = um.template.lock().map(|t| t.clone()).unwrap_or_else(|_| "새 판 {0} 받기".into());
+        let (get, ready) = um.template.lock().map(|t| t.clone()).unwrap_or_else(|_| ("새 판 {0} 받기".into(), "다시 시작해 {0}로 업데이트".into()));
+        // 받아 둔 판이 있으면 「다시 시작해 업데이트」, 아니면 「새 판 받기」(내려받는 페이지 열기).
+        let (template, shown) = match &info.ready {
+            Some(v) => (ready, Some(v.clone())),
+            None => (get, info.newer.clone()),
+        };
         if let Ok(mut slot) = um.item.lock() {
-            match (&info.newer, slot.as_ref()) {
+            match (&shown, slot.as_ref()) {
                 (Some(v), Some(item)) => {
                     let _ = item.set_text(template.replace("{0}", v));
                 }
@@ -176,20 +256,32 @@ fn apply_update(app: &tauri::AppHandle, info: &update::Info) {
 
 /// 새 판 알림 상태(대시보드가 처음 열릴 때 읽는다).
 #[tauri::command]
-fn get_update() -> update::Info {
-    update::info()
+fn get_update(app: tauri::AppHandle) -> update::Info {
+    update_info(&app)
 }
 
 /// 새 판 알림을 켜거나 끈다. 켜면 바로 한 번 확인한다.
 #[tauri::command]
 fn set_update(app: tauri::AppHandle, on: bool) -> Result<update::Info, String> {
     trace(&format!("set_update: {on}"));
-    let info = update::set_on(on)?;
+    update::set_on(on)?;
+    if !on {
+        // 끄면 받아 둔 판도 버린다.
+        if let Some(p) = app.try_state::<Pending>() {
+            if let Ok(mut s) = p.0.lock() {
+                *s = None;
+            }
+        }
+    }
+    let info = update_info(&app);
     apply_update(&app, &info);
     if on {
         std::thread::spawn(move || {
-            update::check_at(&usage::home(), chrono::Local::now().timestamp());
-            apply_update(&app, &update::info());
+            let s = update::check_at(&usage::home(), chrono::Local::now().timestamp());
+            if update::info_of(&s, &update::current()).newer.is_some() {
+                download_update(&app);
+            }
+            apply_update(&app, &update_info(&app));
         });
     }
     Ok(info)
@@ -207,7 +299,10 @@ fn start_update_checker(app: tauri::AppHandle) {
         std::thread::sleep(std::time::Duration::from_secs(20));
         loop {
             let s = update::check_at(&usage::home(), chrono::Local::now().timestamp());
-            let info = update::info_of(&s, &update::current());
+            if update::info_of(&s, &update::current()).newer.is_some() {
+                download_update(&app);
+            }
+            let info = update_info(&app);
             trace(&format!("새 판 확인: {info:?}"));
             apply_update(&app, &info);
             std::thread::sleep(std::time::Duration::from_secs(3600));
@@ -220,6 +315,19 @@ fn sync_top_item(app: &tauri::AppHandle) {
     if let Some(item) = app.try_state::<TopItem>() {
         let _ = item.0.set_checked(widget::is_all_top());
     }
+}
+
+/// 선택 기능 「정확한 Claude 한도 가져오기」가 켜져 있는지(경고에 동의하고 켰을 때만 참).
+#[tauri::command]
+fn get_claude_direct() -> bool {
+    claude_api::is_on()
+}
+
+/// 선택 기능을 켜거나 끈다. 화면은 약관 위험 경고에 동의한 뒤에만 켜기를 부른다.
+#[tauri::command]
+fn set_claude_direct(on: bool) -> Result<bool, String> {
+    trace(&format!("set_claude_direct: {on}"));
+    claude_api::set_on(on)
 }
 
 /// 바탕화면 위젯이 켜져 있는지.
@@ -336,6 +444,7 @@ fn start_ticker(app: tauri::AppHandle) {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             let show = MenuItem::with_id(app, "show", "대시보드 열기", true, None::<&str>)?;
             let wid = MenuItem::with_id(app, "widget", "바탕화면 위젯 켜고 끄기", true, None::<&str>)?;
@@ -343,7 +452,8 @@ pub fn run() {
             let quit = MenuItem::with_id(app, "quit", "종료", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show, &wid, &top, &quit])?;
             app.manage(TopItem(top.clone()));
-            app.manage(UpdateMenu { menu: menu.clone(), item: Mutex::new(None), template: Mutex::new("새 판 {0} 받기".into()) });
+            app.manage(UpdateMenu { menu: menu.clone(), item: Mutex::new(None), template: Mutex::new(("새 판 {0} 받기".into(), "다시 시작해 {0}로 업데이트".into())) });
+            app.manage(Pending(Mutex::new(None)));
             app.manage(MenuLabels(Mutex::new(vec![show.clone(), wid.clone(), quit.clone()])));
             let mut tray = TrayIconBuilder::with_id("main")
                 .title("DeskDusk")
@@ -359,10 +469,16 @@ pub fn run() {
                         let _ = widget::set_all_top(app, !widget::is_all_top());
                         sync_top_item(app);
                     }
-                    "quit" => app.exit(0),
+                    "quit" => {
+                        // 받아 둔 새 판이 있으면 종료할 때 바꿔 둔다(다시 켜지는 않는다).
+                        install_pending(app, false);
+                        app.exit(0)
+                    }
                     "update" => {
-                        if let Some(url) = update::info().url {
-                            let _ = update::open_release(&url);
+                        if !install_pending(app, true) {
+                            if let Some(url) = update::info().url {
+                                let _ = update::open_release(&url);
+                            }
                         }
                     }
                     _ => {}
@@ -384,7 +500,7 @@ pub fn run() {
             widget::open_all(app.handle());
             start_ticker(app.handle().clone());
             start_update_checker(app.handle().clone());
-            apply_update(app.handle(), &update::info());
+            apply_update(app.handle(), &update_info(app.handle()));
             // 위젯 메뉴에서 고른 항목은 그 위젯 화면으로 돌려보낸다.
             app.on_menu_event(|app, event| {
                 if let Some((label, item)) = widget::menu_target(event.id().as_ref()) {
@@ -405,9 +521,15 @@ pub fn run() {
             tauri::WindowEvent::Moved(_) | tauri::WindowEvent::Resized(_) if window.label().starts_with(widget::LABEL_PREFIX) => widget::remember(window),
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![get_usage, set_tray_title, get_autostart, set_autostart, notify, set_menu_labels, get_connect_status, set_claude_connect, get_widget, set_widget, widget_drag, open_dashboard, add_widget, remove_widget, set_widget_opts, widget_resize, widget_menu, widget_to_primary, widget_set_top, install_place, get_update, set_update, open_release])
-        .run(tauri::generate_context!())
-        .expect("앱을 시작하지 못했습니다");
+        .invoke_handler(tauri::generate_handler![get_usage, set_tray_title, get_autostart, set_autostart, notify, set_menu_labels, get_connect_status, set_claude_connect, get_widget, set_widget, widget_drag, open_dashboard, add_widget, remove_widget, set_widget_opts, widget_resize, widget_menu, widget_to_primary, widget_set_top, install_place, get_update, set_update, open_release, get_claude_direct, set_claude_direct, install_update])
+        .build(tauri::generate_context!())
+        .expect("앱을 시작하지 못했습니다")
+        .run(|app, event| {
+            // ⌘Q, 로그아웃 등 어떤 길로 끝나든 받아 둔 새 판이 있으면 바꿔 둔다(한 번만 적용된다).
+            if let tauri::RunEvent::Exit = event {
+                install_pending(app, false);
+            }
+        });
 }
 
 #[cfg(test)]

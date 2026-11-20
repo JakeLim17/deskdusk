@@ -1,6 +1,6 @@
 [package]
 name = "deskdusk"
-version = "0.1.5"
+version = "1.0.1"
 edition = "2021"
 
 [lib]
@@ -17,3 +17,4 @@ serde_json = { version = "1", features = ["preserve_order"] }
 chrono = "0.4"
 dirs = "5"
 tauri-plugin-notification = "2"
+tauri-plugin-updater = "2"

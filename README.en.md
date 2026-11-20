@@ -4,7 +4,7 @@
 
 A desktop app that shows how much you have used your AI coding tools as a **landscape**. The fuller your limits get, the later the day becomes; the faster you burn tokens, the rougher the weather. You can read your status at a glance without reading numbers.
 
-> A personal prototype (0.1.5), built and checked on macOS (Apple Silicon). The same file also contains an Intel build, checked under Rosetta (not on a real Intel Mac). The macOS release is signed with an Apple Developer ID and notarized. The Windows installer has been installed and run on a clean Windows install; it is unsigned, so installing it shows a warning.
+> A personal prototype (1.0.1), built and checked on macOS (Apple Silicon). The same file also contains an Intel build, checked under Rosetta (not on a real Intel Mac). The macOS release is signed with an Apple Developer ID and notarized. The Windows installer has been installed and run on a clean Windows install; it is unsigned, so installing it shows a warning.
 
 ![Dashboard](Docs/screenshots/dashboard.jpg)
 
@@ -20,8 +20,8 @@ Screenshots show the Korean UI with sample numbers and project names; the app al
 
 Get it from the [releases page](../../releases/latest).
 
-- **macOS (Apple Silicon and Intel)**: open `DeskDusk-0.1.5-universal.dmg`, drag DeskDusk into Applications, and open it from there (running it straight from the dmg shows a reminder). The file is notarized by Apple, so it opens right away.
-- **Windows (x64)**: run `DeskDusk_0.1.5_x64-setup.exe`. It is not code-signed, so if SmartScreen warns you, choose "More info → Run anyway". It was installed and run on a clean Windows install, but has not been tested much on PCs with real usage.
+- **macOS (Apple Silicon and Intel)**: open `DeskDusk-1.0.1-universal.dmg`, drag DeskDusk into Applications, and open it from there (running it straight from the dmg shows a reminder). The file is notarized by Apple, so it opens right away.
+- **Windows (x64)**: run `DeskDusk_1.0.1_x64-setup.exe`. It is not code-signed, so if SmartScreen warns you, choose "More info → Run anyway". It was installed and run on a clean Windows install, but has not been tested much on PCs with real usage.
 
 On first launch one widget floats above your windows; use the menu bar (tray on Windows) icon to open the dashboard and toggle widgets.
 
@@ -41,7 +41,7 @@ Claude Code / Codex CLI ──(used as usual with your own account)──▶ Ant
 |---|---|
 | Claude and Codex token usage, last 7 days, per project | None. Just open the app |
 | Codex limits (%) | None. Codex writes its limits into the logs |
-| Claude limits (%) | One-time connection, a single button under Settings → Connections |
+| Claude limits (%) | One-time connection, a single button under Settings → Connections. For per-model limits, the opt-in feature on the same screen (read the warning) |
 
 Claude limits need a connection because Claude Code does not write them to its logs; it only passes them to its status line. The Connections panel opens once on first launch.
 
@@ -61,7 +61,7 @@ Claude limits need a connection because Claude Code does not write them to its l
 - **Limit alerts** — a notification when a limit passes 80% and 95%. Off by default; turn it on in Settings.
 - **Korean and English** — switch in Settings. The first launch follows the system language.
 - **Launch at login** — off by default. When enabled, it starts in the menu bar without opening the window.
-- **Update check** — once a day DeskDusk asks GitHub whether a newer version exists, and if so shows an "Update to …" button in the dashboard and the menu bar menu. Only the app version is sent. Turn it off in Settings.
+- **Automatic updates** — once a day DeskDusk checks GitHub, downloads a new version, and installs it when you click "Restart to update" in the dashboard or menu bar menu, or when you quit. Downloads are installed only after their signature is verified with the public key built into the app. Only the app version is sent; turn it off in Settings. This works from 1.0.1 on; earlier versions need one manual download.
 
 ## How the scene changes
 
@@ -84,7 +84,7 @@ It is calculated from `src-tauri/pricing.json` (US dollars per million tokens). 
 
 ## Where the data comes from
 
-By default, only local logs on this computer. No credentials (keychain or auth files) are opened. The only network requests are the once-a-day update check to GitHub (which sends nothing but the app version and can be turned off in Settings).
+By default, only local logs on this computer. No credentials (keychain or auth files) are opened. The only network requests are the once-a-day update check to GitHub (which sends nothing but the app version and can be turned off in Settings) with the download of a new version, and the opt-in feature below.
 
 | Value | Source |
 |---|---|
@@ -108,7 +108,16 @@ After connecting, use Claude Code in a terminal once to get the first value.
 
 Known limitation: sessions in the Claude desktop app do not run the status line, so the values do not update there. Per-model weekly limits (such as Fable) are not passed to the status line either, so they are not shown.
 
-As of 0.1.5, "Fetch exact Claude limits" (which asked Anthropic's server directly using the Claude Code login token) has been removed. Claude Code's official documentation says third-party apps may not handle Claude login credentials or session tokens, so it could put users' accounts at risk. If you turned it on in an earlier version, you can remove `security` from the access control list of the `Claude Code-credentials` item in Keychain Access.
+### Fetch exact Claude limits (opt-in, off by default, read the warning)
+
+The status line bridge only updates when you use Claude Code in a terminal, and it does not carry per-model weekly limits (such as Fable). Turning on Settings → Connections → Fetch exact Claude limits asks `https://api.anthropic.com/api/oauth/usage` for your limits every 10 minutes using the Claude Code login token stored on this computer.
+
+**Warning**: Claude Code's official documentation does not allow third-party apps to handle Claude login credentials or session tokens, and says Anthropic may act on accounts without prior notice. The feature therefore turns on only after you read the warning and check "I understand the above", and anyone who had it on in 0.1.4 or earlier must accept again in the new version. Turn it on only if you understand the risk and accept it yourself.
+
+- The login (the `Claude Code-credentials` keychain item on macOS, including items with a suffix after that name; `~/.claude/.credentials.json` elsewhere) is used only for that request and is never stored, logged, or modified.
+- macOS asks for keychain access under the name "security" when you turn it on. If you deny it, DeskDusk will not ask again until you turn the feature off and on.
+- You need to have signed in to Claude Code (`claude`) in a terminal once.
+- This is not an officially documented endpoint and may change or stop working at any time.
 
 ## Build and run
 
